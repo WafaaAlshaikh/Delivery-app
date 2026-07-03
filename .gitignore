@@ -1,0 +1,59 @@
+# =========================================================
+# Backend (Node.js)
+# =========================================================
+
+backend/node_modules/
+backend/.env
+
+# Logs
+backend/logs/
+backend/*.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+
+# =========================================================
+# Flutter
+# =========================================================
+
+# Dart / Flutter
+frontend/.dart_tool/
+frontend/build/
+frontend/.packages
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.pub/
+frontend/.metadata
+
+# IDE
+frontend/.idea/
+frontend/.vscode/
+
+# Android
+frontend/android/.gradle/
+frontend/android/local.properties
+
+# iOS
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/ephemeral/
+
+# macOS
+frontend/macos/Pods/
+frontend/macos/Flutter/ephemeral/
+
+# Linux
+frontend/linux/flutter/ephemeral/
+
+# Windows
+frontend/windows/flutter/ephemeral/
+
+# Flutter environment (إذا كنت تستخدم flutter_dotenv)
+frontend/.env
+
+# =========================================================
+# OS Files
+# =========================================================
+
+.DS_Store
+Thumbs.db
