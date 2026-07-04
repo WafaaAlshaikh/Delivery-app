@@ -12,7 +12,11 @@ const {
   logout,
   getProfile,
   updateProfile,
-  getAllUsers
+  getAllUsers,
+  completeDriverOnboarding,
+  getDriverStatus,
+  canGoOnline,
+  resubmitDriverApplication
 } = require('../controllers/authController');
 const { auth, authorize } = require('../middleware/auth');
 
@@ -38,5 +42,9 @@ router.put('/profile', auth, updateProfile);
 // 📌 ADMIN ROUTES
 // ============================================
 router.get('/admin/users', auth, authorize('Admin'), getAllUsers);
+router.put('/driver/onboarding', auth, authorize('Driver'), completeDriverOnboarding);
+router.get('/driver/status', auth, authorize('Driver'), getDriverStatus);
+router.get('/driver/can-go-online', auth, authorize('Driver'), canGoOnline);
+router.put('/driver/resubmit', auth, authorize('Driver'), resubmitDriverApplication);
 
 module.exports = router;

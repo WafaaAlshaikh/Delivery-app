@@ -11,6 +11,8 @@ const {
   OrderStatus,
   sequelize 
 } = require('../models');
+const DriverVerificationService = require('../services/driverVerificationService');
+
 
 // ============================================
 // 📌 DASHBOARD STATS
@@ -740,6 +742,112 @@ const getChartData = async (req, res) => {
   }
 };
 
+const getDriverApplications = async (req, res) => {
+  try {
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📋 [ADMIN] Fetching driver applications');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    const { status = 'Pending' } = req.query;
+    
+    const drivers = await DriverVerificationService.getDriversByStatus(status);
+
+    console.log(`✅ Found ${drivers.length} driver applications`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    res.status(200).json({
+      success: true,
+      data: drivers
+    });
+
+  } catch (error) {
+    console.error('❌ Get driver applications error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching driver applications'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Review driver application (manual override)
+const reviewDriverApplication = async (req, res) => {
+  try {
+    const { profileId } = req.params;
+    const { action, notes } = req.body;
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📋 [ADMIN] Reviewing driver application');
+    console.log(`   ├─ Profile ID: ${profileId}`);
+    console.log(`   ├─ Action: ${action}`);
+    console.log(`   └─ Notes: ${notes || 'None'}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    if (!['approve', 'reject', 'suspend'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid action. Use: approve, reject, or suspend'
+      });
+    }
+
+    const result = await DriverVerificationService.adminReview(
+      profileId,
+      action,
+      notes
+    );
+
+    console.log(`✅ Driver ${action}d successfully`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    res.status(200).json(result);
+
+  } catch (error) {
+    console.error('❌ Review driver application error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error reviewing driver application'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Get driver stats for admin dashboard
+const getDriverStats = async (req, res) => {
+  try {
+    const stats = await DriverVerificationService.getDriverStats();
+
+    res.status(200).json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('❌ Get driver stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching driver stats'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Get all drivers with filters
+const getAllDriversForAdmin = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const drivers = await DriverVerificationService.getDriversByStatus(status || null);
+
+    res.status(200).json({
+      success: true,
+      data: drivers
+    });
+
+  } catch (error) {
+    console.error('❌ Get all drivers error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching drivers'
+    });
+  }
+};
+
 module.exports = {
   getDashboardStats,
   getUsers,
@@ -752,5 +860,9 @@ module.exports = {
   getOrders,
   getOrderDetails,
   updateOrderStatus,
-  getChartData
+  getChartData,
+  getDriverApplications,
+  reviewDriverApplication,
+  getDriverStats,
+  getAllDriversForAdmin
 };

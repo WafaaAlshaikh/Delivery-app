@@ -13,6 +13,7 @@ const {
   canRequestOTP 
 } = require('../services/otpService');
 const { validateEmail, validatePassword } = require('../utils/validators');
+const DriverVerificationService = require('../services/driverVerificationService');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -709,6 +710,8 @@ const getAllUsers = async (req, res) => {
 
 
 
+// D:\Delivery\backend\src\controllers\authController.js
+
 const verifySignup = async (req, res) => {
   const { email, otp } = req.body;
   const tempToken = req.headers.authorization?.split(' ')[1];
@@ -721,6 +724,9 @@ const verifySignup = async (req, res) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   try {
+    // ============================================
+    // 1️⃣ VALIDATE INPUT
+    // ============================================
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
@@ -731,11 +737,13 @@ const verifySignup = async (req, res) => {
     if (!tempToken) {
       return res.status(400).json({
         success: false,
-        message: 'Temporary token is required'
+        message: 'Temporary token is required. Please start signup again.'
       });
     }
 
-    // ✅ Verify OTP
+    // ============================================
+    // 2️⃣ VERIFY OTP
+    // ============================================
     const verification = await verifyOTP(email, otp, 'Verification', true);
     if (!verification.valid) {
       return res.status(400).json({
@@ -744,7 +752,9 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ✅ Decode temp token
+    // ============================================
+    // 3️⃣ DECODE TEMP TOKEN
+    // ============================================
     let tempData;
     try {
       tempData = jwt.verify(tempToken, JWT_SECRET);
@@ -762,7 +772,9 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ✅ Check if user already exists
+    // ============================================
+    // 4️⃣ CHECK IF USER ALREADY EXISTS
+    // ============================================
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({
@@ -771,32 +783,39 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ✅ Hash password
+    // ============================================
+    // 5️⃣ HASH PASSWORD
+    // ============================================
     const hashedPassword = await bcrypt.hash(tempData.password, 10);
 
-    // ✅ Create user
+    // ============================================
+    // 6️⃣ CREATE USER
+    // ============================================
     const user = await User.create({
       full_name: tempData.full_name,
       email: tempData.email,
       password_hash: hashedPassword,
-      phone: tempData.phone,
+      phone: tempData.phone || null,
       is_verified: true,
-      is_active: true
+      is_active: true,
+      profile_image: null,
+      gender: null,
+      birth_date: null,
+      last_login: new Date()
     });
 
-    // ✅ Assign role to user
+    console.log(`✅ User created: ${user.email} (ID: ${user.user_id})`);
+
+    // ============================================
+    // 7️⃣ ASSIGN ROLE TO USER
+    // ============================================
+    let assignedRole = tempData.role || 'Customer';
+    
     const roleRecord = await Role.findOne({ 
-      where: { name: tempData.role || 'Customer' } 
+      where: { name: assignedRole } 
     });
     
-    if (roleRecord) {
-      await UserRole.create({
-        user_id: user.user_id,
-        role_id: roleRecord.role_id,
-        assigned_at: new Date()
-      });
-    } else {
-      // Fallback: assign Customer role
+    if (!roleRecord) {
       const customerRole = await Role.findOne({ where: { name: 'Customer' } });
       if (customerRole) {
         await UserRole.create({
@@ -804,38 +823,87 @@ const verifySignup = async (req, res) => {
           role_id: customerRole.role_id,
           assigned_at: new Date()
         });
+        assignedRole = 'Customer';
       }
+    } else {
+      await UserRole.create({
+        user_id: user.user_id,
+        role_id: roleRecord.role_id,
+        assigned_at: new Date()
+      });
     }
 
-    // ✅ ✅ ✅ NEW: Create DriverProfile if role is Driver
-    if (tempData.role === 'Driver' && tempData.businessType) {
+    console.log(`✅ Role assigned: ${assignedRole}`);
+
+    // ============================================
+    // 8️⃣ DRIVER SPECIFIC HANDLING - MODIFIED
+    // ============================================
+    let driverProfile = null;
+    let needsOnboarding = false;
+
+    if (assignedRole === 'Driver') {
       try {
-        await DriverProfile.create({
+        console.log('🚗 Creating driver profile...');
+
+        // ✅ Create driver profile with PENDING status
+        // ✅ لا نقوم بتشغيل Auto-Approval هنا، بل ننتظر حتى يكمل الملف
+        driverProfile = await DriverProfile.create({
           user_id: user.user_id,
-          vehicle_type: tempData.businessType, // من DriverTypeScreen
-          status: 'Pending' // يحتاج موافقة Admin
+          vehicle_type: tempData.businessType || null,
+          vehicle_plate: null,
+          vehicle_color: null,
+          vehicle_model: null,
+          license_number: null,
+          license_image: null,
+          status: 'Pending', // ✅ Always starts as Pending
+          is_online: false,
+          rating: 0,
+          total_deliveries: 0,
+          onboarding_completed_at: new Date()
         });
-        console.log(`✅ DriverProfile created for ${user.email} with vehicle: ${tempData.businessType}`);
+
+        console.log(`✅ DriverProfile created with ID: ${driverProfile.profile_id}`);
+
+        // ✅ التحقق: هل يحتاج السائق إلى إكمال الملف؟
+        // إذا كان businessType موجوداً، فهذا يعني أنه اختار نوع المركبة
+        // لكن لا يزال يحتاج إلى رقم الرخصة ومعلومات إضافية
+        needsOnboarding = true;
+        
+        // ✅ نرسل إشعار للأدمن بأن هناك سائق جديد في انتظار إكمال الملف
+        // (اختياري)
+
       } catch (driverError) {
-        console.error('⚠️ Failed to create DriverProfile:', driverError);
-        // لا نوقف التسجيل إذا فشل إنشاء DriverProfile
+        console.error('⚠️ Failed to setup driver profile:', driverError);
       }
     }
 
-    // ✅ Delete OTP
+    // ============================================
+    // 9️⃣ DELETE OTP
+    // ============================================
     await deleteOTP(email, 'Verification');
 
-    // ✅ Send welcome email
-    await sendWelcomeEmail(user.email, user.full_name, tempData.role);
+    // ============================================
+    // 🔟 SEND WELCOME EMAIL
+    // ============================================
+    try {
+      await sendWelcomeEmail(user.email, user.full_name, assignedRole);
+      console.log(`✅ Welcome email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('⚠️ Failed to send welcome email:', emailError);
+    }
 
-    // ✅ Get user roles
+    // ============================================
+    // 1️⃣1️⃣ GET USER ROLES
+    // ============================================
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
     });
     const roles = userRoles.map(ur => ur.Role.name);
 
-    // ✅ Generate JWT
+    // ============================================
+    // 1️⃣2️⃣ GENERATE JWT
+    // ============================================
     const token = jwt.sign(
       { 
         user_id: user.user_id, 
@@ -846,10 +914,10 @@ const verifySignup = async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    console.log(`✅ User created successfully: ${user.email} (${roles.join(', ')})`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-
-    res.status(201).json({
+    // ============================================
+    // 1️⃣3️⃣ PREPARE RESPONSE
+    // ============================================
+    const responseData = {
       success: true,
       message: 'Account created successfully',
       token,
@@ -860,15 +928,286 @@ const verifySignup = async (req, res) => {
         phone: user.phone,
         roles: roles,
         is_verified: user.is_verified,
+        is_active: user.is_active,
         profile_image: user.profile_image
+      }
+    };
+
+    // ✅ Add driver specific data
+    if (assignedRole === 'Driver' && driverProfile) {
+      responseData.driverStatus = {
+        profile_id: driverProfile.profile_id,
+        status: driverProfile.status,
+        vehicle_type: driverProfile.vehicle_type,
+        is_online: driverProfile.is_online,
+        isApproved: false,
+        isPending: true,
+        needsOnboarding: needsOnboarding, // ✅ مهم: يقول للـ Frontend أنه يحتاج لإكمال الملف
+        message: needsOnboarding 
+          ? '📝 Please complete your driver profile to start delivering.'
+          : '📋 Your application is being reviewed.',
+        // ✅ نقول للـ Frontend أي شاشة يجب عرضها
+        screen: needsOnboarding ? 'onboarding' : 'pending'
+      };
+    }
+
+    console.log(`✅ User created successfully: ${user.email} (${roles.join(', ')})`);
+    console.log(`   └─ Driver needs onboarding: ${needsOnboarding}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    res.status(201).json(responseData);
+
+  } catch (error) {
+    console.error('❌ Verify signup error:', error);
+    console.error('❌ Error stack:', error.stack);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error during verification. Please try again.'
+    });
+  }
+};
+
+// D:\Delivery\backend\src\controllers\authController.js
+
+// ✅ ✅ ✅ NEW: Complete Driver Onboarding
+const completeDriverOnboarding = async (req, res) => {
+  try {
+    const {
+      vehicle_type,
+      vehicle_plate,
+      vehicle_color,
+      vehicle_model,
+      license_number,
+      license_image // URL of uploaded image
+    } = req.body;
+
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📥 [DRIVER ONBOARDING] Completing profile');
+    console.log(`   ├─ User ID: ${req.user.user_id}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // ✅ Validate required fields
+    const requiredFields = ['vehicle_type', 'license_number'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+
+    // ✅ Find driver profile
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: req.user.user_id }
+    });
+
+    if (!driverProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Driver profile not found. Please contact support.'
+      });
+    }
+
+    // ✅ Don't allow if already approved or rejected
+    if (driverProfile.status === 'Active') {
+      return res.status(400).json({
+        success: false,
+        message: 'Your account is already active.'
+      });
+    }
+
+    if (driverProfile.status === 'Rejected') {
+      return res.status(400).json({
+        success: false,
+        message: `Your application was rejected: ${driverProfile.rejection_reason || 'No reason provided'}. Please contact support.`
+      });
+    }
+
+    // ✅ Update profile
+    await driverProfile.update({
+      vehicle_type: vehicle_type || driverProfile.vehicle_type,
+      vehicle_plate: vehicle_plate || null,
+      vehicle_color: vehicle_color || null,
+      vehicle_model: vehicle_model || null,
+      license_number: license_number,
+      license_image: license_image || null,
+      onboarding_completed_at: new Date()
+    });
+
+    // ✅ 🔥 Process auto-approval again after update
+    const autoApprovalResult = await DriverVerificationService.processAutoApproval(
+      driverProfile.profile_id
+    );
+
+    console.log('✅ Auto-approval result:', autoApprovalResult);
+
+    // ✅ Get updated profile
+    const updatedProfile = await DriverProfile.findByPk(driverProfile.profile_id);
+
+    console.log(`✅ Driver onboarding completed for user ${req.user.user_id}`);
+    console.log(`   └─ Status: ${updatedProfile.status}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+    res.status(200).json({
+      success: true,
+      message: updatedProfile.status === 'Active' 
+        ? '🎉 Your driver account is now active! You can start delivering.'
+        : '✅ Profile updated successfully. Your application is being reviewed.',
+      data: updatedProfile,
+      autoApproval: autoApprovalResult || null
+    });
+
+  } catch (error) {
+    console.error('❌ Complete driver onboarding error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error completing onboarding.'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Get Driver Status
+const getDriverStatus = async (req, res) => {
+  try {
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: req.user.user_id }
+    });
+
+    if (!driverProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Driver profile not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        status: driverProfile.status,
+        isOnline: driverProfile.is_online,
+        isActive: driverProfile.status === 'Active',
+        isPending: driverProfile.status === 'Pending',
+        isSuspended: driverProfile.status === 'Suspended',
+        isRejected: driverProfile.status === 'Rejected',
+        autoApproved: driverProfile.auto_approved || false,
+        approvedAt: driverProfile.approved_at,
+        adminNotes: driverProfile.admin_notes,
+        rejectionReason: driverProfile.rejection_reason,
+        vehicleType: driverProfile.vehicle_type,
+        hasCompleteInfo: !!(driverProfile.license_number && driverProfile.vehicle_plate)
       }
     });
 
   } catch (error) {
-    console.error('❌ Verify signup error:', error);
+    console.error('❌ Get driver status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during verification. Please try again.'
+      message: 'Server error fetching driver status'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Check if driver can go online
+const canGoOnline = async (req, res) => {
+  try {
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: req.user.user_id }
+    });
+
+    if (!driverProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Driver profile not found'
+      });
+    }
+
+    const canGoOnline = driverProfile.status === 'Active';
+    const reasons = [];
+
+    if (driverProfile.status === 'Pending') {
+      reasons.push('Your application is still being reviewed');
+    } else if (driverProfile.status === 'Suspended') {
+      reasons.push('Your account has been suspended');
+    } else if (driverProfile.status === 'Rejected') {
+      reasons.push(`Your application was rejected: ${driverProfile.rejection_reason || 'No reason provided'}`);
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        canGoOnline,
+        status: driverProfile.status,
+        reasons: reasons
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Can go online error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// ✅ ✅ ✅ NEW: Resubmit driver application
+const resubmitDriverApplication = async (req, res) => {
+  try {
+    const { vehicle_type, vehicle_plate, vehicle_color, vehicle_model, license_number } = req.body;
+
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: req.user.user_id }
+    });
+
+    if (!driverProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Driver profile not found'
+      });
+    }
+
+    // Only allow resubmission if rejected
+    if (driverProfile.status !== 'Rejected') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot resubmit. Current status: ${driverProfile.status}`
+      });
+    }
+
+    // Update and reset status to Pending
+    await driverProfile.update({
+      vehicle_type: vehicle_type || driverProfile.vehicle_type,
+      vehicle_plate: vehicle_plate || driverProfile.vehicle_plate,
+      vehicle_color: vehicle_color || driverProfile.vehicle_color,
+      vehicle_model: vehicle_model || driverProfile.vehicle_model,
+      license_number: license_number || driverProfile.license_number,
+      status: 'Pending',
+      rejection_reason: null,
+      admin_notes: null,
+      auto_approved: false
+    });
+
+    // Process auto-approval again
+    const autoApprovalResult = await DriverVerificationService.processAutoApproval(
+      driverProfile.profile_id
+    );
+
+    const updatedProfile = await DriverProfile.findByPk(driverProfile.profile_id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Application resubmitted successfully',
+      data: updatedProfile,
+      autoApproval: autoApprovalResult || null
+    });
+
+  } catch (error) {
+    console.error('❌ Resubmit driver application error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
     });
   }
 };
@@ -1108,5 +1447,9 @@ module.exports = {
   updateDriverProfile,
   toggleDriverOnline,
   updateDriverLocation,
-  getDriverStats
+  getDriverStats,
+  completeDriverOnboarding,
+  getDriverStatus,
+  canGoOnline,
+  resubmitDriverApplication
 };

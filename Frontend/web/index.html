@@ -18,32 +18,352 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="PickNGo - Multi-Vendor Delivery App">
+  <meta name="theme-color" content="#FF5A36">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="frontend">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PickNGo">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>frontend</title>
+  <title>PickNGo - Delivery App</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- ✅ Google Fonts for better typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Sora:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- ✅ Font Awesome for icons (fallback) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    /* ============================================
+       ✅ GLOBAL STYLES FOR PICKNGO WEB
+       ============================================ */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F6F7F9;
+      color: #12141A;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ✅ Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #F0F1F4;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #FF5A36;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #E0431F;
+    }
+
+    /* ✅ Loading spinner (shown before Flutter loads) */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #F6F7F9;
+      z-index: 9999;
+      transition: opacity 0.6s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .loading-logo-icon {
+      width: 52px;
+      height: 52px;
+      background: #FF5A36;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      box-shadow: 0 8px 24px rgba(255, 90, 54, 0.30);
+    }
+
+    .loading-logo-text {
+      font-family: 'Sora', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #12141A;
+      letter-spacing: -0.5px;
+    }
+
+    .loading-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3.5px solid #E7E9ED;
+      border-top-color: #FF5A36;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-text {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #98A1AF;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ✅ Pulse animation for the loading dot */
+    .loading-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      background: #FF5A36;
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ✅ Ensure Flutter canvas takes full height */
+    flutter-view {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    /* ✅ Responsive adjustments */
+    @media (max-width: 600px) {
+      .loading-logo-text {
+        font-size: 20px;
+      }
+      .loading-logo-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+      }
+      .loading-spinner {
+        width: 28px;
+        height: 28px;
+      }
+    }
+
+    /* ✅ Dark mode support for the loading screen */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #12141A;
+      }
+      #loading-screen {
+        background: #12141A;
+      }
+      .loading-logo-text {
+        color: #FFFFFF;
+      }
+      .loading-spinner {
+        border-color: #33363F;
+        border-top-color: #FF5A36;
+      }
+      .loading-text {
+        color: #5B6472;
+      }
+    }
+
+    /* ✅ Prevent text selection on UI elements */
+    .no-select {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* ✅ Smooth loading transition */
+    #flutter-app {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    #flutter-app.loaded {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
-  <script src="flutter_bootstrap.js" async></script>
-  <!-- ✅ Google Maps API Key for Web -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAEGm-gX39A5x7DA9a0qSg6mEbYNmqAPPk&libraries=places">
-</script>
+  <!-- ============================================
+    ✅ LOADING SCREEN (shown before Flutter loads)
+    ============================================ -->
+  <div id="loading-screen" aria-hidden="true">
+    <div class="loading-logo">
+      <div class="loading-logo-icon">
+        <i class="fas fa-bolt"></i>
+      </div>
+      <span class="loading-logo-text">PickNGo</span>
+    </div>
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading your delivery experience...</div>
+    <div class="loading-dots">
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+      <span class="loading-dot"></span>
+    </div>
+  </div>
+
+  <!-- ============================================
+    ✅ FLUTTER APP CONTAINER
+    ============================================ -->
+  <div id="flutter-app">
+    <!--
+      You can customize the "flutter_bootstrap.js" script.
+      This is useful to provide a custom configuration to the Flutter loader
+      or to give the user feedback during the initialization process.
+
+      For more details:
+      * https://docs.flutter.dev/platform-integration/web/initialization
+    -->
+    <script src="flutter_bootstrap.js" async></script>
+  </div>
+
+  <!-- ============================================
+    ✅ GOOGLE MAPS API KEY FOR WEB
+    ============================================ -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAEGm-gX39A5x7DA9a0qSg6mEbYNmqAPPk&libraries=places,geometry">
+  </script>
+
+  <!-- ============================================
+    ✅ HIDE LOADING SCREEN WHEN FLUTTER IS READY
+    ============================================ -->
+  <script>
+    (function() {
+      'use strict';
+
+      // ✅ Hide loading screen when Flutter is ready
+      function hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const flutterApp = document.getElementById('flutter-app');
+        
+        if (loadingScreen) {
+          loadingScreen.classList.add('hidden');
+          // Remove from DOM after transition
+          setTimeout(() => {
+            if (loadingScreen.parentNode) {
+              loadingScreen.style.display = 'none';
+            }
+          }, 700);
+        }
+
+        if (flutterApp) {
+          flutterApp.classList.add('loaded');
+        }
+      }
+
+      // ✅ Listen for Flutter initialization complete
+      document.addEventListener('flutter-initialized', hideLoadingScreen);
+
+      // ✅ Fallback: hide after 8 seconds even if event doesn't fire
+      setTimeout(hideLoadingScreen, 8000);
+
+      // ✅ Also hide when the user interacts (just in case)
+      document.addEventListener('click', function onFirstClick() {
+        hideLoadingScreen();
+        document.removeEventListener('click', onFirstClick);
+      }, { once: true });
+
+      // ✅ Touch/scroll events for mobile
+      document.addEventListener('touchstart', function onFirstTouch() {
+        hideLoadingScreen();
+        document.removeEventListener('touchstart', onFirstTouch);
+      }, { once: true });
+
+      console.log('🚀 PickNGo Web App initialized');
+      console.log('📱 Waiting for Flutter to load...');
+
+    })();
+  </script>
+
+  <!-- ============================================
+    ✅ ADDITIONAL WEB FEATURES
+    ============================================ -->
+
+  <!-- ✅ Service Worker registration for PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('flutter_service_worker.js')
+          .then(function(registration) {
+            console.log('✅ Service Worker registered successfully');
+          })
+          .catch(function(error) {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+
+  <!-- ✅ Handle online/offline status -->
+  <script>
+    window.addEventListener('online', function() {
+      console.log('📶 App is online');
+      // You can show a notification or refresh data
+    });
+
+    window.addEventListener('offline', function() {
+      console.log('📶 App is offline');
+      // You can show a notification
+    });
+  </script>
+
 </body>
 </html>

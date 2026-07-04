@@ -355,4 +355,96 @@ Future<AuthResponse> signup({
   Future<String?> getToken() async {
     return await _storageService.getToken();
   }
+
+  Future<AuthResponse> completeDriverOnboarding({
+    required String vehicleType,
+    String? vehiclePlate,
+    String? vehicleColor,
+    String? vehicleModel,
+    required String licenseNumber,
+    String? licenseImage,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        '/api/auth/driver/onboarding',
+        data: {
+          'vehicle_type': vehicleType,
+          'vehicle_plate': vehiclePlate,
+          'vehicle_color': vehicleColor,
+          'vehicle_model': vehicleModel,
+          'license_number': licenseNumber,
+          'license_image': licenseImage,
+        },
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Complete driver onboarding error: $e');
+      }
+      return AuthResponse(
+        success: false,
+        message: 'Network error. Please check your connection.',
+      );
+    }
+  }
+
+  // ✅ Get Driver Status
+  Future<Map<String, dynamic>> getDriverStatus() async {
+    try {
+      final response = await _apiService.get('/api/auth/driver/status');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Get driver status error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ✅ Check if driver can go online
+  Future<Map<String, dynamic>> canGoOnline() async {
+    try {
+      final response = await _apiService.get('/api/auth/driver/can-go-online');
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Can go online error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ✅ Resubmit driver application
+  Future<AuthResponse> resubmitDriverApplication({
+    required String vehicleType,
+    String? vehiclePlate,
+    String? vehicleColor,
+    String? vehicleModel,
+    required String licenseNumber,
+  }) async {
+    try {
+      final response = await _apiService.put(
+        '/api/auth/driver/resubmit',
+        data: {
+          'vehicle_type': vehicleType,
+          'vehicle_plate': vehiclePlate,
+          'vehicle_color': vehicleColor,
+          'vehicle_model': vehicleModel,
+          'license_number': licenseNumber,
+        },
+      );
+
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Resubmit driver application error: $e');
+      }
+      return AuthResponse(
+        success: false,
+        message: 'Network error. Please check your connection.',
+      );
+    }
+  }
+
 }

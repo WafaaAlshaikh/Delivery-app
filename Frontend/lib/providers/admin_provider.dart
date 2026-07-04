@@ -1,4 +1,5 @@
-// lib/providers/admin_provider.dart
+// D:\Delivery\frontend\lib\providers\admin_provider.dart
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/admin_service.dart';
 
@@ -63,6 +64,20 @@ final adminDriversProvider = FutureProvider<List<dynamic>>((ref) async {
   return response['data'];
 });
 
+// ✅ NEW: All drivers with filters
+final adminAllDriversProvider = FutureProvider.family<Map<String, dynamic>, String?>((ref, status) async {
+  final service = ref.read(adminServiceProvider);
+  final response = await service.getAllDrivers(status: status);
+  return response;
+});
+
+// ✅ NEW: Driver applications
+final adminDriverApplicationsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final service = ref.read(adminServiceProvider);
+  final response = await service.getDriverApplications();
+  return response;
+});
+
 // ============================================
 // 📦 ORDERS PROVIDER
 // ============================================
@@ -84,7 +99,7 @@ final adminOrderDetailsProvider = FutureProvider.family<Map<String, dynamic>, in
 });
 
 // ============================================
-// 📊 ADMIN STATE (للتحميل والأخطاء)
+// 📊 ADMIN STATE
 // ============================================
 
 class AdminState {
@@ -128,20 +143,86 @@ class AdminState {
 }
 
 class AdminNotifier extends StateNotifier<AdminState> {
-  AdminNotifier() : super(AdminState());
+  final AdminService _adminService;
+
+  AdminNotifier(this._adminService) : super(AdminState());
 
   Future<void> loadDashboard() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // TODO: جلب البيانات من الـ API
-      // final data = await _adminService.getDashboardStats();
-      // state = state.copyWith(isLoading: false, dashboardData: data);
+      final data = await _adminService.getDashboardStats();
+      state = state.copyWith(
+        isLoading: false,
+        dashboardData: data['data'],
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
     }
+  }
+
+  Future<void> loadUsers({String? role, String? search}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final data = await _adminService.getUsers(role: role, search: search);
+      state = state.copyWith(
+        isLoading: false,
+        users: data['data']['users'],
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> loadDrivers({String? status}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final data = await _adminService.getAllDrivers(status: status);
+      state = state.copyWith(
+        isLoading: false,
+        drivers: data['data'],
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> reviewDriverApplication({
+    required int profileId,
+    required String action,
+    String? notes,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _adminService.reviewDriverApplication(
+        profileId: profileId,
+        action: action,
+        notes: notes,
+      );
+      state = state.copyWith(isLoading: false);
+      await loadDrivers(); // Refresh list
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 }
 
 final adminProvider = StateNotifierProvider<AdminNotifier, AdminState>((ref) {
-  return AdminNotifier();
+  final service = ref.read(adminServiceProvider);
+  return AdminNotifier(service);
 });

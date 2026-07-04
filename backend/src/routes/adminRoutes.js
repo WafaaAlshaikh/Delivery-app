@@ -14,7 +14,11 @@ const {
   getOrders,
   getOrderDetails,
   updateOrderStatus,
-  getChartData
+  getChartData,
+  getDriverApplications,
+  reviewDriverApplication,
+  getDriverStats,
+  getAllDriversForAdmin
 } = require('../controllers/adminController');
 
 // ============================================
@@ -53,5 +57,10 @@ router.get('/drivers', getDrivers);
 router.get('/orders', getOrders);
 router.get('/orders/:id', getOrderDetails);
 router.put('/orders/:id/status', updateOrderStatus);
+
+router.get('/driver-applications', auth, adminOnly, getDriverApplications);
+router.put('/driver-applications/:profileId', auth, adminOnly, reviewDriverApplication);
+router.get('/drivers/stats', auth, adminOnly, getDriverStats);
+router.get('/drivers/all', auth, adminOnly, getAllDriversForAdmin);
 
 module.exports = router;

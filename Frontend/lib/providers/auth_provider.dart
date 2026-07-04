@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/auth_response.dart';
 import '../data/models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/storage_service.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService();
@@ -19,7 +20,8 @@ class AuthState {
   final UserModel? user;
   final String? error;
   final AuthResponse? authResponse;
-  final bool isInitialized; // ✅ جديد: للتأكد من التهيئة
+  final bool isInitialized;
+  final Map<String, dynamic>? driverStatus;
 
   AuthState({
     this.isLoading = false,
@@ -27,7 +29,8 @@ class AuthState {
     this.user,
     this.error,
     this.authResponse,
-    this.isInitialized = false, // ✅ جديد
+    this.isInitialized = false,
+    this.driverStatus,
   });
 
   AuthState copyWith({
@@ -37,6 +40,7 @@ class AuthState {
     String? error,
     AuthResponse? authResponse,
     bool? isInitialized,
+    Map<String, dynamic>? driverStatus,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -45,19 +49,19 @@ class AuthState {
       error: error ?? this.error,
       authResponse: authResponse ?? this.authResponse,
       isInitialized: isInitialized ?? this.isInitialized,
+      driverStatus: driverStatus ?? this.driverStatus,
     );
   }
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final StorageService _storageService = StorageService();
 
   AuthNotifier(this._authService) : super(AuthState()) {
-    // ✅ التحقق من حالة المستخدم بشكل غير متزامن
     _checkAuth();
   }
 
-  // ✅ تعديل _checkAuth ليكون Future
   Future<void> _checkAuth() async {
     try {
       final isLoggedIn = await _authService.isLoggedIn();
@@ -69,11 +73,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           isInitialized: true,
         );
+        
+        if (user.isDriver) {
+          final driverStatus = await getDriverStatus();
+          state = state.copyWith(driverStatus: driverStatus);
+        }
       } else {
         state = state.copyWith(isInitialized: true);
       }
     } catch (e) {
-      // في حالة الخطأ، اعتبر أن المستخدم غير مسجل دخول
       state = state.copyWith(
         isAuthenticated: false,
         user: null,
@@ -83,12 +91,108 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // ✅ دالة للتحقق من التهيئة
   Future<void> initialize() async {
     await _checkAuth();
   }
 
-  // ✅ دالة verifyOTP (موجودة بالفعل)
+  // ============================================
+  // 📌 SIGNUP
+  // ============================================
+
+  Future<void> signup({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    String role = 'Customer',
+    String? businessType,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _authService.signup(
+        fullName: fullName,
+        email: email,
+        password: password,
+        phone: phone,
+        role: role,
+        businessType: businessType,
+      );
+
+      state = state.copyWith(
+        isLoading: false,
+        authResponse: response,
+        error: response.success ? null : response.message,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred',
+      );
+    }
+  }
+
+
+  Future<Map<String, dynamic>> verifySignup({
+    required String email,
+    required String otp,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _authService.verifySignup(
+        email: email,
+        otp: otp,
+      );
+
+      if (response.success && response.user != null) {
+        await _storageService.saveUser(response.user!);
+        if (response.token != null) {
+          await _storageService.saveToken(response.token!);
+        }
+
+        final driverStatus = response.driverStatus;
+        final needsOnboarding = driverStatus?['needsOnboarding'] ?? false;
+        final driverStatusText = driverStatus?['status'] ?? 'Pending';
+
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          user: response.user,
+          authResponse: response,
+          error: null,
+          driverStatus: driverStatus,
+        );
+
+        return {
+          'success': true,
+          'needsOnboarding': needsOnboarding,
+          'driverStatus': driverStatusText,
+          'user': response.user,
+        };
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          authResponse: response,
+          error: response.message,
+        );
+        return {
+          'success': false,
+          'message': response.message,
+        };
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred',
+      );
+      return {
+        'success': false,
+        'message': 'An unexpected error occurred',
+      };
+    }
+  }
+
   Future<void> verifyOTP({
     required String email,
     required String otp,
@@ -116,76 +220,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // lib/providers/auth_provider.dart
-
-Future<void> signup({
-  required String fullName,
-  required String email,
-  required String password,
-  String? phone,
-  String role = 'Customer',
-  String? businessType, // ✅ جديد
-}) async {
-  state = state.copyWith(isLoading: true, error: null);
-
-  try {
-    final response = await _authService.signup(
-      fullName: fullName,
-      email: email,
-      password: password,
-      phone: phone,
-      role: role,
-      businessType: businessType, // ✅ إرسال businessType
-    );
-
-    state = state.copyWith(
-      isLoading: false,
-      authResponse: response,
-      error: response.success ? null : response.message,
-    );
-  } catch (e) {
-    state = state.copyWith(
-      isLoading: false,
-      error: 'An unexpected error occurred',
-    );
-  }
-}
-  Future<void> verifySignup({
-    required String email,
-    required String otp,
-  }) async {
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      final response = await _authService.verifySignup(
-        email: email,
-        otp: otp,
-      );
-
-      if (response.success && response.user != null) {
-        state = state.copyWith(
-          isLoading: false,
-          isAuthenticated: true,
-          user: response.user,
-          authResponse: response,
-          error: null,
-        );
-      } else {
-        state = state.copyWith(
-          isLoading: false,
-          authResponse: response,
-          error: response.message,
-        );
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'An unexpected error occurred',
-      );
-    }
-  }
-
-  // Resend OTP
   Future<void> resendOTP({required String email}) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -205,7 +239,6 @@ Future<void> signup({
     }
   }
 
-  // Login
   Future<void> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -216,6 +249,11 @@ Future<void> signup({
       );
 
       if (response.success && response.user != null) {
+        await _storageService.saveUser(response.user!);
+        if (response.token != null) {
+          await _storageService.saveToken(response.token!);
+        }
+
         state = state.copyWith(
           isLoading: false,
           isAuthenticated: true,
@@ -223,6 +261,11 @@ Future<void> signup({
           authResponse: response,
           error: null,
         );
+        
+        if (response.user!.isDriver) {
+          final driverStatus = await getDriverStatus();
+          state = state.copyWith(driverStatus: driverStatus);
+        }
       } else if (response.requireVerification == true) {
         state = state.copyWith(
           isLoading: false,
@@ -244,7 +287,6 @@ Future<void> signup({
     }
   }
 
-  // Logout
   Future<void> logout() async {
     state = state.copyWith(isLoading: true);
 
@@ -257,6 +299,7 @@ Future<void> signup({
         user: null,
         authResponse: null,
         error: null,
+        driverStatus: null,
       );
     } catch (e) {
       state = state.copyWith(
@@ -265,11 +308,11 @@ Future<void> signup({
         user: null,
         authResponse: null,
         error: null,
+        driverStatus: null,
       );
     }
   }
 
-  // Forgot Password
   Future<void> forgotPassword({required String email}) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -289,7 +332,6 @@ Future<void> signup({
     }
   }
 
-  // Reset Password
   Future<void> resetPassword({
     required String email,
     required String otp,
@@ -317,7 +359,6 @@ Future<void> signup({
     }
   }
 
-  // Get Profile
   Future<void> getProfile() async {
     state = state.copyWith(isLoading: true);
 
@@ -325,6 +366,7 @@ Future<void> signup({
       final response = await _authService.getProfile();
 
       if (response.success && response.data != null) {
+        await _storageService.saveUser(response.data!);
         state = state.copyWith(
           isLoading: false,
           user: response.data,
@@ -344,7 +386,6 @@ Future<void> signup({
     }
   }
 
-  // Update Profile
   Future<void> updateProfile({
     String? fullName,
     String? phone,
@@ -364,6 +405,7 @@ Future<void> signup({
       );
 
       if (response.success && response.data != null) {
+        await _storageService.saveUser(response.data!);
         state = state.copyWith(
           isLoading: false,
           user: response.data,
@@ -383,6 +425,133 @@ Future<void> signup({
     }
   }
 
+  Future<bool> completeDriverOnboarding({
+    required String vehicleType,
+    String? vehiclePlate,
+    String? vehicleColor,
+    String? vehicleModel,
+    required String licenseNumber,
+    String? licenseImage,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _authService.completeDriverOnboarding(
+        vehicleType: vehicleType,
+        vehiclePlate: vehiclePlate,
+        vehicleColor: vehicleColor,
+        vehicleModel: vehicleModel,
+        licenseNumber: licenseNumber,
+        licenseImage: licenseImage,
+      );
+
+      // ✅ استخدام response.data بدلاً من response.data (الآن موجود)
+      if (response.success && response.data != null) {
+        // ✅ تحديث حالة السائق من البيانات المرتجعة
+        final newDriverStatus = response.data;
+        state = state.copyWith(
+          isLoading: false,
+          error: null,
+          driverStatus: newDriverStatus,
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: response.message,
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred',
+      );
+      return false;
+    }
+  }
+
+  // lib/providers/auth_provider.dart
+
+// ✅ Get Driver Status - مع handling للخطأ
+Future<Map<String, dynamic>?> getDriverStatus() async {
+  try {
+    final response = await _authService.getDriverStatus();
+    if (response['success'] == true) {
+      final data = response['data'];
+      // ✅ تحديث الـ state
+      state = state.copyWith(driverStatus: data);
+      return data;
+    }
+    return null;
+  } catch (e) {
+    print('❌ Get driver status error: $e');
+    // ✅ في حالة الخطأ، نرجع قيمة افتراضية
+    return {
+      'status': 'Pending',
+      'needsOnboarding': true,
+      'hasCompleteInfo': false,
+    };
+  }
+}
+  // ✅ Check if driver can go online
+  Future<bool> canGoOnline() async {
+    try {
+      final response = await _authService.canGoOnline();
+      return response['data']?['canGoOnline'] ?? false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ✅ Resubmit driver application
+  Future<bool> resubmitDriverApplication({
+    required String vehicleType,
+    String? vehiclePlate,
+    String? vehicleColor,
+    String? vehicleModel,
+    required String licenseNumber,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final response = await _authService.resubmitDriverApplication(
+        vehicleType: vehicleType,
+        vehiclePlate: vehiclePlate,
+        vehicleColor: vehicleColor,
+        vehicleModel: vehicleModel,
+        licenseNumber: licenseNumber,
+      );
+
+      // ✅ استخدام response.data
+      if (response.success && response.data != null) {
+        final newDriverStatus = response.data;
+        state = state.copyWith(
+          isLoading: false,
+          error: null,
+          driverStatus: newDriverStatus,
+        );
+        return true;
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: response.message,
+        );
+        return false;
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: 'An unexpected error occurred',
+      );
+      return false;
+    }
+  }
+
+  // ============================================
+  // 📌 UTILITY FUNCTIONS
+  // ============================================
+
   // Clear error
   void clearError() {
     state = state.copyWith(error: null);
@@ -393,6 +562,5 @@ Future<void> signup({
     state = state.copyWith(authResponse: null);
   }
 
-  // ✅ دالة للتحقق مما إذا كان المستخدم مسجل دخول (مزامنة)
   bool get isAuthenticatedSync => state.isAuthenticated;
 }

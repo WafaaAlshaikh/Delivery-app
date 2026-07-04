@@ -264,4 +264,81 @@ class AdminService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getDriverApplications({String status = 'Pending'}) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _dio.get(
+        '/api/admin/driver-applications',
+        queryParameters: {'status': status},
+        options: Options(headers: headers),
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Get driver applications error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ✅ Review driver application
+  Future<Map<String, dynamic>> reviewDriverApplication({
+    required int profileId,
+    required String action, // 'approve', 'reject', 'suspend'
+    String? notes,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _dio.put(
+        '/api/admin/driver-applications/$profileId',
+        data: {
+          'action': action,
+          if (notes != null) 'notes': notes,
+        },
+        options: Options(headers: headers),
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Review driver application error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ✅ Get driver stats
+  Future<Map<String, dynamic>> getDriverStats() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _dio.get(
+        '/api/admin/drivers/stats',
+        options: Options(headers: headers),
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Get driver stats error: $e');
+      }
+      rethrow;
+    }
+  }
+
+  // ✅ Get all drivers
+  Future<Map<String, dynamic>> getAllDrivers({String? status}) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await _dio.get(
+        '/api/admin/drivers/all',
+        queryParameters: status != null ? {'status': status} : null,
+        options: Options(headers: headers),
+      );
+      return response.data;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Get all drivers error: $e');
+      }
+      rethrow;
+    }
+  }
 }

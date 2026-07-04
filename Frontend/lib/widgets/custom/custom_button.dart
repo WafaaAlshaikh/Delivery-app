@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 
+// ✅ تعريف الـ Enum
 enum CustomButtonVariant { filled, outlined, ghost }
 
 class CustomButton extends StatelessWidget {
@@ -9,8 +10,6 @@ class CustomButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final CustomButtonVariant variant;
-  final bool isOutlined; // kept for backward compatibility
-  final bool isGradient; // kept for backward compatibility
   final Color? backgroundColor;
   final Color? textColor;
   final IconData? icon;
@@ -23,8 +22,6 @@ class CustomButton extends StatelessWidget {
     this.onPressed,
     this.isLoading = false,
     this.variant = CustomButtonVariant.filled,
-    this.isOutlined = false,
-    this.isGradient = false,
     this.backgroundColor,
     this.textColor,
     this.icon,
@@ -32,17 +29,12 @@ class CustomButton extends StatelessWidget {
     this.height = 56,
   });
 
-  CustomButtonVariant get _resolvedVariant {
-    if (isOutlined) return CustomButtonVariant.outlined;
-    return variant;
-  }
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: width,
       height: height,
-      child: switch (_resolvedVariant) {
+      child: switch (variant) {
         CustomButtonVariant.outlined => _buildOutlined(),
         CustomButtonVariant.ghost => _buildGhost(),
         CustomButtonVariant.filled => _buildFilled(),
@@ -51,9 +43,6 @@ class CustomButton extends StatelessWidget {
   }
 
   Widget _buildFilled() {
-    // isGradient no longer changes visuals (flat coral reads cleaner and
-    // more "delivery app" than a glossy gradient) but the param is kept so
-    // call sites don't need to change.
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(

@@ -9,6 +9,8 @@ class AuthResponse {
   final UserModel? user;
   final bool? requireVerification;
   final String? expiresIn;
+  final Map<String, dynamic>? driverStatus; // ✅ جديد
+  final Map<String, dynamic>? data;
 
   AuthResponse({
     required this.success,
@@ -18,6 +20,8 @@ class AuthResponse {
     this.user,
     this.requireVerification,
     this.expiresIn,
+    this.driverStatus, // ✅ جديد
+    this.data, // ✅ جديد
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,13 @@ class AuthResponse {
       user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
       requireVerification: json['requireVerification'],
       expiresIn: json['expiresIn'],
+      driverStatus: json['driverStatus'] != null 
+          ? Map<String, dynamic>.from(json['driverStatus']) 
+          : null,
+      // ✅ استخراج data إذا وجد
+      data: json['data'] != null 
+          ? Map<String, dynamic>.from(json['data']) 
+          : null,
     );
   }
 
@@ -41,6 +52,8 @@ class AuthResponse {
       'user': user?.toJson(),
       'requireVerification': requireVerification,
       'expiresIn': expiresIn,
+      'driverStatus': driverStatus,
+      'data': data,
     };
   }
 }
