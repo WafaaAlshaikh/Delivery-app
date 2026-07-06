@@ -9,12 +9,12 @@ const {
   UserAddress,
   Product,
   DriverProfile,
+  OrderStatusHistory,
   sequelize 
 } = require('../models');
+const DispatchService = require('../services/dispatchService');
 
-// ============================================
-// 📌 GET AVAILABLE ORDERS (النسخة النهائية)
-// ============================================
+
 const getAvailableOrders = async (req, res) => {
   try {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -37,7 +37,6 @@ const getAvailableOrders = async (req, res) => {
     console.log(`   ├─ Sort By: ${sortBy}`);
     console.log(`   └─ Filter By: ${filterBy}`);
 
-    // ✅ جلب بيانات السائق (نوع المركبة)
     const driverProfile = await DriverProfile.findOne({
       where: { user_id: req.user.user_id }
     });
@@ -45,13 +44,11 @@ const getAvailableOrders = async (req, res) => {
     const driverVehicleType = driverProfile?.vehicle_type || 'Motorcycle';
     console.log(`   ├─ Driver Vehicle: ${driverVehicleType}`);
 
-    // ✅ Build where clause - Only pending orders
     const whereClause = {
-      status_id: 1, // Pending
-      driver_id: null // No driver assigned yet
+      status_id: 1,
+      driver_id: null 
     };
 
-    // ✅ جلب الطلبات
     const orders = await Order.findAll({
       where: whereClause,
       order: [['created_at', 'ASC']],
@@ -88,7 +85,6 @@ const getAvailableOrders = async (req, res) => {
 
     console.log(`   ├─ Found ${orders.length} pending orders`);
 
-    // ✅ معالجة كل طلب
     let ordersWithDetails = orders.map(order => {
       const orderData = order.toJSON();
       
@@ -99,7 +95,6 @@ const getAvailableOrders = async (req, res) => {
       let orderWeight = 0;
       let requiresHeavyVehicle = false;
 
-      // ✅ حساب وزن الطلب
       if (orderData.OrderItems && orderData.OrderItems.length > 0) {
         orderData.OrderItems.forEach(item => {
           const weight = item.Product?.weight || 0.5;
@@ -109,7 +104,6 @@ const getAvailableOrders = async (req, res) => {
 
       requiresHeavyVehicle = orderWeight > 50;
 
-      // ✅ حساب المسافة من عنوان التوصيل
       const addressLat = orderData.UserAddress?.latitude;
       const addressLng = orderData.UserAddress?.longitude;
 
@@ -131,7 +125,6 @@ const getAvailableOrders = async (req, res) => {
         }
       }
 
-      // ✅ حساب الأرباح المتوقعة
       try {
         const baseFee = 5;
         const distanceFee = distance ? distance * 0.5 : 0;
@@ -142,13 +135,11 @@ const getAvailableOrders = async (req, res) => {
         estimatedEarning = 5.00;
       }
 
-      // ✅ تحديد إذا كان الطلب مستعجل
       const createdAt = new Date(orderData.created_at);
       const now = new Date();
       const minutesSinceOrder = (now - createdAt) / (1000 * 60);
       isExpress = minutesSinceOrder > 15;
 
-      // ✅ تحديد مدى مناسبة الطلب لنوع مركبة السائق
       let vehicleMatch = 'perfect';
       if (requiresHeavyVehicle && driverVehicleType === 'Bicycle') {
         vehicleMatch = 'poor';
@@ -170,17 +161,13 @@ const getAvailableOrders = async (req, res) => {
       };
     });
 
-    // ✅ ✅ ✅ التعديل الأهم: لا نفلتر إذا كانت الإحداثيات غير موجودة
     let filteredOrders = [...ordersWithDetails];
 
-    // ✅ نتحقق إذا كان أي طلب عنده إحداثيات
     const hasAnyCoordinates = ordersWithDetails.some(order => 
       order.distance !== null && order.distance !== undefined
     );
 
-    // ✅ تطبيق الفلاتر فقط إذا كان في إحداثيات
     if (hasAnyCoordinates) {
-      // 1️⃣ فلتر حسب النوع
       if (filterBy === 'nearby') {
         filteredOrders = filteredOrders.filter(order => 
           order.distance !== null && order.distance <= 5
@@ -191,7 +178,6 @@ const getAvailableOrders = async (req, res) => {
         filteredOrders = filteredOrders.filter(order => order.requires_heavy_vehicle === true);
       }
 
-      // 2️⃣ فلتر حسب المسافة
       if (latitude && longitude && radius) {
         filteredOrders = filteredOrders.filter(order => {
           if (order.distance === null || order.distance === undefined) return true;
@@ -199,13 +185,11 @@ const getAvailableOrders = async (req, res) => {
         });
       }
 
-      // 3️⃣ فلتر حسب نوع المركبة
       filteredOrders = filteredOrders.filter(order => {
         if (order.vehicle_match === 'poor') return false;
         return true;
       });
 
-      // ✅ الترتيب (فقط إذا في إحداثيات)
       switch (sortBy) {
         case 'distance':
           filteredOrders.sort((a, b) => {
@@ -237,10 +221,8 @@ const getAvailableOrders = async (req, res) => {
           break;
       }
     } else {
-      // ✅ ✅ ✅ إذا مافيش إحداثيات، نرجع كل الطلبات بدون ترتيب
       console.log('   ⚠️ No coordinates found, returning all orders without filtering');
       
-      // ✅ نرتب حسب التاريخ فقط
       filteredOrders.sort((a, b) => {
         const dateA = new Date(a.created_at);
         const dateB = new Date(b.created_at);
@@ -284,9 +266,7 @@ const getAvailableOrders = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 HELPER: Calculate distance
-// ============================================
+
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -299,9 +279,6 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   return R * c;
 };
 
-// ============================================
-// 📌 GET ORDER DETAILS
-// ============================================
 const getOrderDetailsForDriver = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -365,7 +342,347 @@ const getOrderDetailsForDriver = async (req, res) => {
   }
 };
 
+const getAvailableOffers = async (req, res) => {
+  try {
+    const driverId = req.user.user_id;
+    
+    const offers = await DispatchService.getActiveOffers(driverId);
+    
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: driverId }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        offers: offers,
+        isOnline: driverProfile?.is_online || false,
+        driverStatus: driverProfile?.status || 'Pending'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Get available offers error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching offers'
+    });
+  }
+};
+
+const acceptOffer = async (req, res) => {
+  try {
+    const { offerId } = req.params;
+    const driverId = req.user.user_id;
+
+    const result = await DispatchService.acceptOffer(offerId, driverId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`driver_${driverId}`).emit('offer_accepted', {
+        orderId: result.order.order_id,
+        message: 'Order accepted successfully!'
+      });
+      
+      io.to(`business_${result.order.business_id}`).emit('order_assigned', {
+        orderId: result.order.order_id,
+        driverId: driverId
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Order accepted successfully',
+      data: result
+    });
+
+  } catch (error) {
+    console.error('❌ Accept offer error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to accept offer'
+    });
+  }
+};
+
+const rejectOffer = async (req, res) => {
+  try {
+    const { offerId } = req.params;
+    const driverId = req.user.user_id;
+    const { reason } = req.body;
+
+    const result = await DispatchService.rejectOffer(offerId, driverId, reason);
+
+    res.status(200).json({
+      success: true,
+      message: 'Offer rejected'
+    });
+
+  } catch (error) {
+    console.error('❌ Reject offer error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to reject offer'
+    });
+  }
+};
+
+const acceptOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const driverId = req.user.user_id;
+
+    const offer = await DeliveryOffer.findOne({
+      where: {
+        order_id: orderId,
+        driver_id: driverId,
+        status: 'pending'
+      }
+    });
+
+    if (!offer) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active offer found for this order'
+      });
+    }
+
+    const result = await DispatchService.acceptOffer(offer.offer_id, driverId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Order accepted successfully',
+      data: result
+    });
+
+  } catch (error) {
+    console.error('❌ Accept order error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to accept order'
+    });
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { status_id, notes, latitude, longitude } = req.body;
+    const driverId = req.user.user_id;
+
+    console.log(`📨 Update order status:`, {
+      orderId,
+      status_id,
+      notes,
+      latitude,
+      longitude,
+      driverId
+    });
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    if (order.driver_id !== driverId) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not assigned to this order'
+      });
+    }
+
+    const validStatuses = [5, 6, 7, 8]; 
+    if (!validStatuses.includes(status_id)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status: ${status_id}. Allowed: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const currentStatus = order.status_id;
+    if (status_id <= currentStatus && currentStatus !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot go backwards in status. Current: ${currentStatus}, New: ${status_id}`
+      });
+    }
+
+    await order.update({
+      status_id: status_id,
+      updated_at: new Date()
+    });
+
+    await OrderStatusHistory.create({
+      order_id: orderId,
+      status_id: status_id,
+      changed_by: driverId,
+      notes: notes || `Status updated to ${status_id}`
+    });
+
+    if (status_id === 8) {
+      await DriverProfile.increment('total_deliveries', {
+        where: { user_id: driverId }
+      });
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      const status = await OrderStatus.findByPk(status_id);
+      io.to(`user_${order.customer_id}`).emit('order_status_updated', {
+        orderId: orderId,
+        status: status_id,
+        statusName: status?.name || 'Unknown',
+        driverLocation: latitude && longitude ? { latitude, longitude } : null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Order status updated successfully',
+      data: order
+    });
+
+  } catch (error) {
+    console.error('❌ Update order status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating order status'
+    });
+  }
+};
+
+
+async function getStatusName(statusId) {
+  const status = await OrderStatus.findByPk(statusId);
+  return status ? status.name : 'Unknown';
+}
+
+
+const updateDeliveryLocation = async (req, res) => {
+  try {
+    const { orderId, latitude, longitude } = req.body;
+    const driverId = req.user.user_id;
+
+    const order = await Order.findOne({
+      where: {
+        order_id: orderId,
+        driver_id: driverId
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found or not assigned to you'
+      });
+    }
+
+    await DriverProfile.update({
+      current_latitude: latitude,
+      current_longitude: longitude,
+      last_location_update: new Date()
+    }, {
+      where: { user_id: driverId }
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${order.customer_id}`).emit('driver_location_updated', {
+        orderId: orderId,
+        latitude: latitude,
+        longitude: longitude,
+        timestamp: new Date()
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Location updated successfully'
+    });
+
+  } catch (error) {
+    console.error('❌ Update delivery location error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error updating location'
+    });
+  }
+};
+
+
+const getCurrentDelivery = async (req, res) => {
+  try {
+    const driverId = req.user.user_id;
+    console.log(`🔍 Getting current delivery for driver ${driverId}`);
+
+    const order = await Order.findOne({
+      where: {
+        driver_id: driverId,
+        status_id: {
+          [Op.between]: [2, 7] 
+        }
+      },
+      include: [
+        { model: Business, attributes: ['business_id', 'name', 'phone', 'latitude', 'longitude'] },
+        { model: User, as: 'Customer', attributes: ['user_id', 'full_name', 'phone'] },
+        { model: UserAddress, attributes: ['address_id', 'street', 'city', 'building', 'latitude', 'longitude'] },
+        { model: OrderStatus, attributes: ['status_id', 'name', 'color'] },
+        { 
+          model: OrderItem,
+          include: [{ model: Product, attributes: ['product_id', 'name', 'image_url'] }]
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    if (!order) {
+      console.log(`❌ No active delivery found for driver ${driverId}`);
+      return res.status(404).json({
+        success: false,
+        message: 'No active delivery found'
+      });
+    }
+
+    console.log(`✅ Found delivery for driver ${driverId}: Order #${order.order_id}`);
+
+    const driverProfile = await DriverProfile.findOne({
+      where: { user_id: driverId }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        order: order,
+        driverLocation: {
+          latitude: driverProfile?.current_latitude,
+          longitude: driverProfile?.current_longitude,
+          lastUpdate: driverProfile?.last_location_update
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Get current delivery error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error fetching current delivery'
+    });
+  }
+};
+
 module.exports = {
   getAvailableOrders,
-  getOrderDetailsForDriver
+  getAvailableOffers, 
+  getOrderDetailsForDriver,
+  acceptOffer, 
+  rejectOffer,
+  acceptOrder, 
+  updateDeliveryLocation,
+  getCurrentDelivery,
+  updateOrderStatus
+  
 };
+

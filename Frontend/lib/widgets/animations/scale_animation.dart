@@ -34,7 +34,6 @@ class ScaleAnimation extends StatelessWidget {
   }
 }
 
-// ✅ Pulse Animation for Buttons
 class PulseAnimation extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;

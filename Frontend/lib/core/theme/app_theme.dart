@@ -18,21 +18,18 @@ class AppTheme {
         error: AppColors.error,
       ),
 
-      // ✅ Text Theme - من مشروعك (يستخدم GoogleFonts)
       textTheme: AppTypography.textTheme,
       fontFamily: AppTypography.body(14).fontFamily,
 
-      // ✅ AppBar - من مشروعك مع بعض التحسينات من صاحبتك
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.canvas,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false, // false أفضل للتصميمات الحديثة
+        centerTitle: false, 
         iconTheme: const IconThemeData(color: AppColors.ink900),
         titleTextStyle: AppTypography.display(18, weight: FontWeight.w700),
       ),
 
-      // ✅ ElevatedButton - من مشروعك
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -40,7 +37,7 @@ class AppTheme {
           disabledBackgroundColor: AppColors.ink100,
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18), // 18 بدل 12 (أكثر حداثة)
+            borderRadius: BorderRadius.circular(18), 
           ),
           elevation: 0,
           textStyle: const TextStyle(
@@ -50,7 +47,6 @@ class AppTheme {
         ),
       ),
 
-      // ✅ OutlinedButton - من مشروعك
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.ink900,
@@ -62,7 +58,6 @@ class AppTheme {
         ),
       ),
 
-      // ✅ TextButton - من مشروعك
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
@@ -72,7 +67,6 @@ class AppTheme {
         ),
       ),
 
-      // ✅ InputDecoration - من مشروعك (يستخدم AppTypography)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceSunken,
@@ -101,7 +95,6 @@ class AppTheme {
         hintStyle: AppTypography.body(14, color: AppColors.ink300),
       ),
 
-      // ✅ Card - من مشروعك
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
@@ -111,7 +104,6 @@ class AppTheme {
         shadowColor: AppColors.ink900.withOpacity(0.06),
       ),
 
-      // ✅ Chip - من مشروعك
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.primarySoft,
         labelStyle: AppTypography.body(
@@ -126,7 +118,6 @@ class AppTheme {
         side: BorderSide.none,
       ),
 
-      // ✅ Divider - من مشروعك
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
         thickness: 1,

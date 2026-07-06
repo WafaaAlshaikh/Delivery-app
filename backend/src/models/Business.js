@@ -69,6 +69,23 @@ const Business = sequelize.define('Business', {
       max: 5
     }
   },
+
+latitude: {
+  type: DataTypes.DECIMAL(10, 8),
+  allowNull: true,
+  validate: {
+    min: -90,
+    max: 90
+  }
+},
+longitude: {
+  type: DataTypes.DECIMAL(11, 8),
+  allowNull: true,
+  validate: {
+    min: -180,
+    max: 180
+  }
+},
   minimum_order: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true,

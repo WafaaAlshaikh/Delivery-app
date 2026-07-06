@@ -2,10 +2,9 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geocoding/geocoding.dart'; // ✅ إضافة geocoding
+import 'package:geocoding/geocoding.dart'; 
 
 class LocationService {
-  // ✅ التحقق من الأذونات وطلبها
   Future<bool> checkAndRequestPermissions() async {
     if (kIsWeb) {
       try {
@@ -51,7 +50,6 @@ Future<Position?> getCurrentLocation() async {
     return null;
   }
 }
-  // ✅ الاستماع لتحديثات الموقع المستمرة
   Stream<Position> getLocationStream() {
     return Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -62,15 +60,12 @@ Future<Position?> getCurrentLocation() async {
     );
   }
 
-  // ✅ حساب المسافة بين نقطتين (بالكيلومتر)
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     return Geolocator.distanceBetween(lat1, lon1, lat2, lon2) / 1000;
   }
 
-  // ✅ تحويل الإحداثيات إلى عنوان باستخدام geocoding
   Future<String> getAddressFromLatLng(double lat, double lng) async {
     try {
-      // ✅ استخدام geocoding بدلاً من Geolocator.placemarkFromCoordinates
       final placemarks = await placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -86,7 +81,6 @@ Future<Position?> getCurrentLocation() async {
     }
   }
 
-  // ✅ تحويل الإحداثيات إلى Placemark (كائن كامل)
   Future<Placemark?> getPlacemarkFromLatLng(double lat, double lng) async {
     try {
       final placemarks = await placemarkFromCoordinates(lat, lng);

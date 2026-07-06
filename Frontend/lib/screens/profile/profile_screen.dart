@@ -31,7 +31,6 @@ class ProfileScreen extends ConsumerWidget {
         children: [
           const SizedBox(height: 20),
 
-          // ✅ صورة المستخدم
           CircleAvatar(
             radius: 60,
             backgroundColor: AppColors.primarySoft,
@@ -53,21 +52,18 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // ✅ الاسم
           Text(
             currentUser.fullName,
             style: AppTypography.display(22, weight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
 
-          // ✅ الإيميل
           Text(
             currentUser.email,
             style: AppTypography.body(14, color: AppColors.ink500),
           ),
           const SizedBox(height: 8),
 
-          // ✅ حالة التحقق
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
@@ -87,7 +83,6 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // ✅ الأدوار (Chips)
           if (currentUser.roles.isNotEmpty)
             Wrap(
               spacing: 8,
@@ -123,7 +118,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           const SizedBox(height: 32),
 
-          // ✅ قائمة الإعدادات
           _SettingsTile(
             icon: Icons.person_outline,
             title: 'Edit Profile',
@@ -139,7 +133,7 @@ class ProfileScreen extends ConsumerWidget {
             },
           ),
           _SettingsTile(
-            icon: Icons.notifications_outlined, // ✅ تصحيح: notifications_outlined
+            icon: Icons.notifications_outlined, 
             title: 'Notifications',
             onTap: () {
               // TODO: فتح إعدادات الإشعارات
@@ -154,7 +148,6 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 32),
 
-          // ✅ زر تسجيل الخروج
           if (onLogout != null)
             SizedBox(
               width: double.infinity,
@@ -181,7 +174,6 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-// ✅ عنصر الإعدادات
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;

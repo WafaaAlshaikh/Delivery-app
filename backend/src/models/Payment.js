@@ -15,7 +15,7 @@ const Payment = sequelize.define('Payment', {
       model: 'orders',
       key: 'order_id'
     },
-    unique: true  // One payment per order
+    unique: true  
   },
   method_id: {
     type: DataTypes.INTEGER,

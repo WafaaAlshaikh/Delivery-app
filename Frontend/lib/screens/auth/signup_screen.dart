@@ -13,8 +13,8 @@ import 'verify_otp_screen.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
-  final String? role; // ✅ إضافة role كـ parameter اختياري
-  final String? businessType; // ✅ إضافة businessType كـ parameter اختياري
+  final String? role; 
+  final String? businessType; 
 
   const SignupScreen({
     super.key,
@@ -33,7 +33,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   bool _obscurePassword = true;
-  late String _selectedRole; // ✅ تغيير إلى late String
+  late String _selectedRole;
   bool _agreeTerms = false;
 
   static const _roles = [
@@ -45,7 +45,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ تعيين الدور الافتراضي من widget.role أو 'Customer'
     _selectedRole = widget.role ?? 'Customer';
   }
 
@@ -168,7 +167,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   },
                 ),
                 const SizedBox(height: 20),
-                // ✅ إظهار الدور المحدد مسبقاً أو اختياره
                 if (widget.role == null) ...[
                   Text('I want to sign up as', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink500)),
                   const SizedBox(height: 10),
@@ -178,7 +176,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     onChanged: (value) => setState(() => _selectedRole = value),
                   ),
                 ] else ...[
-                  // ✅ إذا كان الدور محدداً مسبقاً، عرضه فقط
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
@@ -258,14 +255,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   onPressed: _agreeTerms
                       ? () {
                           if (_formKey.currentState!.validate()) {
-                            // ✅ إرسال البيانات مع role و businessType
                             authNotifier.signup(
                               fullName: _fullNameController.text.trim(),
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
                               phone: _phoneController.text.trim(),
                               role: _selectedRole,
-                              businessType: widget.businessType, // ✅ إرسال businessType
+                              businessType: widget.businessType, 
                             );
                           }
                         }

@@ -42,7 +42,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
     setState(() => _isResubmitting = true);
 
     try {
-      // Navigate to onboarding to update information
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -74,7 +73,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ✅ Icon
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -89,7 +87,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
               ),
               const SizedBox(height: 24),
               
-              // ✅ Title
               Text(
                 'Application Rejected',
                 style: AppTypography.display(24, weight: FontWeight.w800),
@@ -97,7 +94,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
               ),
               const SizedBox(height: 8),
               
-              // ✅ Subtitle
               Text(
                 'Your driver application was not approved at this time.',
                 style: AppTypography.body(14, color: AppColors.ink500),
@@ -105,7 +101,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
               ),
               const SizedBox(height: 16),
               
-              // ✅ Reason
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -130,7 +125,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
               ),
               const SizedBox(height: 24),
               
-              // ✅ Action Buttons
               CustomButton(
                 text: 'Update & Resubmit',
                 icon: Icons.refresh_rounded,
@@ -151,7 +145,6 @@ class _DriverRejectedScreenState extends ConsumerState<DriverRejectedScreen> {
               ),
               const SizedBox(height: 8),
               
-              // ✅ Contact Support
               TextButton(
                 onPressed: () {
                   // TODO: Open support chat or email

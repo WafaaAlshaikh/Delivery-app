@@ -19,7 +19,6 @@ require('dotenv').config();
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-// src/controllers/authController.js - تعديل دالة signupInitial
 
 const signupInitial = async (req, res) => {
   const { 
@@ -28,7 +27,7 @@ const signupInitial = async (req, res) => {
     password, 
     phone, 
     role = 'Customer',
-    businessType // ✅ جديد - نوع المركبة للـ Driver أو نوع النشاط للـ Merchant
+    businessType 
   } = req.body;
 
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -43,7 +42,6 @@ const signupInitial = async (req, res) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   try {
-    // ✅ Validation
     if (!full_name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -65,7 +63,6 @@ const signupInitial = async (req, res) => {
       });
     }
 
-    // ✅ Check if role exists in database
     const roleRecord = await Role.findOne({ 
       where: { name: role } 
     });
@@ -77,7 +74,6 @@ const signupInitial = async (req, res) => {
       });
     }
 
-    // ✅ Check if email already registered
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({
@@ -86,7 +82,6 @@ const signupInitial = async (req, res) => {
       });
     }
 
-    // ✅ Check OTP cooldown
     const canRequest = await canRequestOTP(email, 'Verification', 1);
     if (!canRequest.allowed) {
       return res.status(429).json({
@@ -95,23 +90,20 @@ const signupInitial = async (req, res) => {
       });
     }
 
-    // ✅ Generate OTP
     const otp = generateOTP();
     console.log(`🔑 Generated OTP for ${email}: ${otp}`);
 
-    // ✅ Store temp data - ✅ حفظ businessType
     const tempData = {
       full_name,
       email,
       password,
       phone: phone || null,
       role,
-      businessType: businessType || null // ✅ حفظ businessType
+      businessType: businessType || null 
     };
 
     const tempToken = generateTempToken(tempData, JWT_SECRET);
 
-    // ✅ Store OTP
     await storeOTP(
       email,
       otp,
@@ -123,7 +115,6 @@ const signupInitial = async (req, res) => {
       }
     );
 
-    // ✅ Send OTP email
     await sendOTPEmail(email, otp, 'Verification');
 
     console.log(`✅ OTP sent successfully to ${email}`);
@@ -146,10 +137,6 @@ const signupInitial = async (req, res) => {
 };
 
 
-
-// ============================================
-// 📌 RESEND OTP
-// ============================================
 const resendOTP = async (req, res) => {
   const { email } = req.body;
   const tempToken = req.headers.authorization?.split(' ')[1];
@@ -243,9 +230,6 @@ const resendOTP = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 LOGIN
-// ============================================
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -281,7 +265,6 @@ const login = async (req, res) => {
     }
 
     if (!user.is_verified) {
-      // Send new OTP for verification
       const otp = generateOTP();
       const tempData = { email: user.email, user_id: user.user_id };
       const tempToken = generateTempToken(tempData, JWT_SECRET, 15);
@@ -316,17 +299,14 @@ const login = async (req, res) => {
       });
     }
 
-    // ✅ Update last login
     await user.update({ last_login: new Date() });
 
-    // ✅ Get user roles
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
     });
     const roles = userRoles.map(ur => ur.Role.name);
 
-    // ✅ Generate JWT
     const token = jwt.sign(
       { 
         user_id: user.user_id, 
@@ -364,9 +344,6 @@ const login = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 FORGOT PASSWORD
-// ============================================
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -435,9 +412,6 @@ const forgotPassword = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 RESET PASSWORD
-// ============================================
 const resetPassword = async (req, res) => {
   const { email, otp, new_password } = req.body;
 
@@ -503,9 +477,7 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 VERIFY OTP ONLY
-// ============================================
+
 const verifyOTPOnly = async (req, res) => {
   const { email, otp, type = 'Verification' } = req.body;
 
@@ -556,9 +528,6 @@ const verifyOTPOnly = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 LOGOUT
-// ============================================
 const logout = async (req, res) => {
   res.status(200).json({
     success: true,
@@ -566,9 +535,6 @@ const logout = async (req, res) => {
   });
 };
 
-// ============================================
-// 📌 GET PROFILE
-// ============================================
 const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.user_id, {
@@ -582,7 +548,6 @@ const getProfile = async (req, res) => {
       });
     }
 
-    // ✅ Get user roles
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
@@ -616,9 +581,7 @@ const getProfile = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 UPDATE PROFILE
-// ============================================
+
 const updateProfile = async (req, res) => {
   const { full_name, phone, profile_image, gender, birth_date } = req.body;
 
@@ -639,7 +602,6 @@ const updateProfile = async (req, res) => {
       birth_date: birth_date || user.birth_date
     });
 
-    // ✅ Get user roles
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
@@ -670,9 +632,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 ADMIN - GET ALL USERS
-// ============================================
+
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
@@ -680,7 +640,6 @@ const getAllUsers = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    // ✅ Get roles for each user
     const usersWithRoles = await Promise.all(users.map(async (user) => {
       const userRoles = await UserRole.findAll({
         where: { user_id: user.user_id },
@@ -710,7 +669,6 @@ const getAllUsers = async (req, res) => {
 
 
 
-// D:\Delivery\backend\src\controllers\authController.js
 
 const verifySignup = async (req, res) => {
   const { email, otp } = req.body;
@@ -724,9 +682,6 @@ const verifySignup = async (req, res) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   try {
-    // ============================================
-    // 1️⃣ VALIDATE INPUT
-    // ============================================
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
@@ -741,9 +696,6 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ============================================
-    // 2️⃣ VERIFY OTP
-    // ============================================
     const verification = await verifyOTP(email, otp, 'Verification', true);
     if (!verification.valid) {
       return res.status(400).json({
@@ -752,9 +704,6 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ============================================
-    // 3️⃣ DECODE TEMP TOKEN
-    // ============================================
     let tempData;
     try {
       tempData = jwt.verify(tempToken, JWT_SECRET);
@@ -772,9 +721,6 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ============================================
-    // 4️⃣ CHECK IF USER ALREADY EXISTS
-    // ============================================
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({
@@ -783,14 +729,8 @@ const verifySignup = async (req, res) => {
       });
     }
 
-    // ============================================
-    // 5️⃣ HASH PASSWORD
-    // ============================================
     const hashedPassword = await bcrypt.hash(tempData.password, 10);
 
-    // ============================================
-    // 6️⃣ CREATE USER
-    // ============================================
     const user = await User.create({
       full_name: tempData.full_name,
       email: tempData.email,
@@ -806,9 +746,6 @@ const verifySignup = async (req, res) => {
 
     console.log(`✅ User created: ${user.email} (ID: ${user.user_id})`);
 
-    // ============================================
-    // 7️⃣ ASSIGN ROLE TO USER
-    // ============================================
     let assignedRole = tempData.role || 'Customer';
     
     const roleRecord = await Role.findOne({ 
@@ -835,9 +772,6 @@ const verifySignup = async (req, res) => {
 
     console.log(`✅ Role assigned: ${assignedRole}`);
 
-    // ============================================
-    // 8️⃣ DRIVER SPECIFIC HANDLING - MODIFIED
-    // ============================================
     let driverProfile = null;
     let needsOnboarding = false;
 
@@ -845,8 +779,6 @@ const verifySignup = async (req, res) => {
       try {
         console.log('🚗 Creating driver profile...');
 
-        // ✅ Create driver profile with PENDING status
-        // ✅ لا نقوم بتشغيل Auto-Approval هنا، بل ننتظر حتى يكمل الملف
         driverProfile = await DriverProfile.create({
           user_id: user.user_id,
           vehicle_type: tempData.businessType || null,
@@ -855,7 +787,7 @@ const verifySignup = async (req, res) => {
           vehicle_model: null,
           license_number: null,
           license_image: null,
-          status: 'Pending', // ✅ Always starts as Pending
+          status: 'Pending', 
           is_online: false,
           rating: 0,
           total_deliveries: 0,
@@ -864,27 +796,17 @@ const verifySignup = async (req, res) => {
 
         console.log(`✅ DriverProfile created with ID: ${driverProfile.profile_id}`);
 
-        // ✅ التحقق: هل يحتاج السائق إلى إكمال الملف؟
-        // إذا كان businessType موجوداً، فهذا يعني أنه اختار نوع المركبة
-        // لكن لا يزال يحتاج إلى رقم الرخصة ومعلومات إضافية
+
         needsOnboarding = true;
-        
-        // ✅ نرسل إشعار للأدمن بأن هناك سائق جديد في انتظار إكمال الملف
-        // (اختياري)
+
 
       } catch (driverError) {
         console.error('⚠️ Failed to setup driver profile:', driverError);
       }
     }
 
-    // ============================================
-    // 9️⃣ DELETE OTP
-    // ============================================
     await deleteOTP(email, 'Verification');
 
-    // ============================================
-    // 🔟 SEND WELCOME EMAIL
-    // ============================================
     try {
       await sendWelcomeEmail(user.email, user.full_name, assignedRole);
       console.log(`✅ Welcome email sent to ${user.email}`);
@@ -892,18 +814,12 @@ const verifySignup = async (req, res) => {
       console.error('⚠️ Failed to send welcome email:', emailError);
     }
 
-    // ============================================
-    // 1️⃣1️⃣ GET USER ROLES
-    // ============================================
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
     });
     const roles = userRoles.map(ur => ur.Role.name);
 
-    // ============================================
-    // 1️⃣2️⃣ GENERATE JWT
-    // ============================================
     const token = jwt.sign(
       { 
         user_id: user.user_id, 
@@ -914,9 +830,6 @@ const verifySignup = async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    // ============================================
-    // 1️⃣3️⃣ PREPARE RESPONSE
-    // ============================================
     const responseData = {
       success: true,
       message: 'Account created successfully',
@@ -933,7 +846,6 @@ const verifySignup = async (req, res) => {
       }
     };
 
-    // ✅ Add driver specific data
     if (assignedRole === 'Driver' && driverProfile) {
       responseData.driverStatus = {
         profile_id: driverProfile.profile_id,
@@ -942,11 +854,10 @@ const verifySignup = async (req, res) => {
         is_online: driverProfile.is_online,
         isApproved: false,
         isPending: true,
-        needsOnboarding: needsOnboarding, // ✅ مهم: يقول للـ Frontend أنه يحتاج لإكمال الملف
+        needsOnboarding: needsOnboarding,
         message: needsOnboarding 
           ? '📝 Please complete your driver profile to start delivering.'
           : '📋 Your application is being reviewed.',
-        // ✅ نقول للـ Frontend أي شاشة يجب عرضها
         screen: needsOnboarding ? 'onboarding' : 'pending'
       };
     }
@@ -968,9 +879,7 @@ const verifySignup = async (req, res) => {
   }
 };
 
-// D:\Delivery\backend\src\controllers\authController.js
 
-// ✅ ✅ ✅ NEW: Complete Driver Onboarding
 const completeDriverOnboarding = async (req, res) => {
   try {
     const {
@@ -979,7 +888,7 @@ const completeDriverOnboarding = async (req, res) => {
       vehicle_color,
       vehicle_model,
       license_number,
-      license_image // URL of uploaded image
+      license_image 
     } = req.body;
 
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -987,7 +896,6 @@ const completeDriverOnboarding = async (req, res) => {
     console.log(`   ├─ User ID: ${req.user.user_id}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // ✅ Validate required fields
     const requiredFields = ['vehicle_type', 'license_number'];
     const missingFields = requiredFields.filter(field => !req.body[field]);
     
@@ -998,7 +906,6 @@ const completeDriverOnboarding = async (req, res) => {
       });
     }
 
-    // ✅ Find driver profile
     const driverProfile = await DriverProfile.findOne({
       where: { user_id: req.user.user_id }
     });
@@ -1010,7 +917,6 @@ const completeDriverOnboarding = async (req, res) => {
       });
     }
 
-    // ✅ Don't allow if already approved or rejected
     if (driverProfile.status === 'Active') {
       return res.status(400).json({
         success: false,
@@ -1025,7 +931,6 @@ const completeDriverOnboarding = async (req, res) => {
       });
     }
 
-    // ✅ Update profile
     await driverProfile.update({
       vehicle_type: vehicle_type || driverProfile.vehicle_type,
       vehicle_plate: vehicle_plate || null,
@@ -1036,14 +941,12 @@ const completeDriverOnboarding = async (req, res) => {
       onboarding_completed_at: new Date()
     });
 
-    // ✅ 🔥 Process auto-approval again after update
     const autoApprovalResult = await DriverVerificationService.processAutoApproval(
       driverProfile.profile_id
     );
 
     console.log('✅ Auto-approval result:', autoApprovalResult);
 
-    // ✅ Get updated profile
     const updatedProfile = await DriverProfile.findByPk(driverProfile.profile_id);
 
     console.log(`✅ Driver onboarding completed for user ${req.user.user_id}`);
@@ -1068,7 +971,6 @@ const completeDriverOnboarding = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Get Driver Status
 const getDriverStatus = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
@@ -1109,7 +1011,6 @@ const getDriverStatus = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Check if driver can go online
 const canGoOnline = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
@@ -1152,7 +1053,6 @@ const canGoOnline = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Resubmit driver application
 const resubmitDriverApplication = async (req, res) => {
   try {
     const { vehicle_type, vehicle_plate, vehicle_color, vehicle_model, license_number } = req.body;
@@ -1168,7 +1068,6 @@ const resubmitDriverApplication = async (req, res) => {
       });
     }
 
-    // Only allow resubmission if rejected
     if (driverProfile.status !== 'Rejected') {
       return res.status(400).json({
         success: false,
@@ -1176,7 +1075,6 @@ const resubmitDriverApplication = async (req, res) => {
       });
     }
 
-    // Update and reset status to Pending
     await driverProfile.update({
       vehicle_type: vehicle_type || driverProfile.vehicle_type,
       vehicle_plate: vehicle_plate || driverProfile.vehicle_plate,
@@ -1189,7 +1087,6 @@ const resubmitDriverApplication = async (req, res) => {
       auto_approved: false
     });
 
-    // Process auto-approval again
     const autoApprovalResult = await DriverVerificationService.processAutoApproval(
       driverProfile.profile_id
     );
@@ -1212,7 +1109,6 @@ const resubmitDriverApplication = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Get Driver Profile
 const getDriverProfile = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
@@ -1239,7 +1135,6 @@ const getDriverProfile = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Update Driver Profile
 const updateDriverProfile = async (req, res) => {
   try {
     const {
@@ -1283,7 +1178,6 @@ const updateDriverProfile = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Toggle Driver Online Status
 const toggleDriverOnline = async (req, res) => {
   try {
     const { is_online } = req.body;
@@ -1321,7 +1215,6 @@ const toggleDriverOnline = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Update Driver Location
 const updateDriverLocation = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
@@ -1368,7 +1261,6 @@ const updateDriverLocation = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Get Driver Stats (Earnings, Deliveries, Rating)
 const getDriverStats = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
@@ -1382,28 +1274,25 @@ const getDriverStats = async (req, res) => {
       });
     }
 
-    // ✅ Get completed deliveries count
     const completedDeliveries = await Order.count({
       where: {
         driver_id: req.user.user_id,
-        status_id: 8 // Delivered
+        status_id: 8 
       }
     });
 
-    // ✅ Get total earnings from delivered orders
     const earningsResult = await Order.sum('total', {
       where: {
         driver_id: req.user.user_id,
-        status_id: 8 // Delivered
+        status_id: 8
       }
     });
 
-    // ✅ Get current orders
     const currentOrders = await Order.count({
       where: {
         driver_id: req.user.user_id,
         status_id: {
-          [Op.between]: [2, 7] // Accepted to On The Way
+          [Op.between]: [2, 7]
         }
       }
     });
@@ -1428,9 +1317,7 @@ const getDriverStats = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 EXPORT - إضافة الدوال الجديدة
-// ============================================
+
 module.exports = {
   signupInitial,
   verifySignup,

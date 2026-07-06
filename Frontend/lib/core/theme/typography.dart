@@ -1,7 +1,4 @@
 // lib/core/theme/typography.dart
-//
-// Type system: Sora (display, geometric/confident) + Inter (body, quiet
-// workhorse) + JetBrains Mono (order codes, OTP digits, prices).
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';

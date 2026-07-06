@@ -18,8 +18,7 @@ class MerchantOrders extends StatelessWidget {
             style: AppTypography.display(18, weight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          // ✅ تمرير index لكل بطاقة
-          ...List.generate(3, (index) => _MerchantOrderCard(index: index)), // ✅ إضافة index
+          ...List.generate(3, (index) => _MerchantOrderCard(index: index)), 
         ],
       ),
     );
@@ -27,13 +26,12 @@ class MerchantOrders extends StatelessWidget {
 }
 
 class _MerchantOrderCard extends StatelessWidget {
-  final int index; // ✅ إضافة index كـ parameter
+  final int index; 
 
-  const _MerchantOrderCard({required this.index}); // ✅ constructor مع index
+  const _MerchantOrderCard({required this.index}); 
 
   @override
   Widget build(BuildContext context) {
-    // ✅ قائمة العملاء والأسعار والحالات
     final customers = ['Ahmed Mohamed', 'Sara Ali', 'Mohammed Hassan'];
     final totals = ['\$45.00', '\$67.50', '\$23.00'];
     final statuses = ['Pending', 'Pending', 'Accepted'];
@@ -55,7 +53,7 @@ class _MerchantOrderCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Order #ORD-2024-00${index + 1}', // ✅ استخدام index
+                'Order #ORD-2024-00${index + 1}', 
                 style: AppTypography.body(14, weight: FontWeight.w600),
               ),
               Row(
@@ -72,7 +70,6 @@ class _MerchantOrderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // ✅ إظهار زر Accept فقط إذا كانت الحالة Pending
                   if (statuses[index % statuses.length] == 'Pending')
                     ElevatedButton(
                       onPressed: () {
@@ -93,11 +90,11 @@ class _MerchantOrderCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Customer: ${customers[index % customers.length]}', // ✅ استخدام index
+            'Customer: ${customers[index % customers.length]}', 
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
           Text(
-            'Total: ${totals[index % totals.length]}', // ✅ استخدام index
+            'Total: ${totals[index % totals.length]}',
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
         ],

@@ -5,9 +5,7 @@ require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// ============================================
-// 📌 AUTHENTICATION MIDDLEWARE
-// ============================================
+
 const auth = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -77,9 +75,7 @@ const auth = async (req, res, next) => {
   }
 };
 
-// ============================================
-// 📌 AUTHORIZATION MIDDLEWARE
-// ============================================
+
 const authorize = (allowedRoles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -104,9 +100,6 @@ const authorize = (allowedRoles) => {
   };
 };
 
-// ============================================
-// 📌 ADMIN MIDDLEWARE (اختصار)
-// ============================================
 const adminOnly = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
@@ -125,9 +118,6 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
-// ============================================
-// 📌 CHECK ROLE HELPERS
-// ============================================
 const hasRole = (req, roles) => {
   if (!req.user) return false;
   const allowedRoles = Array.isArray(roles) ? roles : [roles];

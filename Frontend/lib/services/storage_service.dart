@@ -7,12 +7,10 @@ import '../data/models/user_model.dart';
 class StorageService {
   static SharedPreferences? _prefs;
 
-  // ✅ Initialize once
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // ✅ Ensure initialized
   static Future<SharedPreferences> get _instance async {
     if (_prefs == null) {
       await init();

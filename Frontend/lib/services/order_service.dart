@@ -26,10 +26,7 @@ class OrderService {
     };
   }
 
-  // ============================================
-  // 📌 GET AVAILABLE ORDERS (مع فلترة وترتيب)
-  // ============================================
-  // frontend/lib/services/order_service.dart
+
 
 Future<List<OrderModel>> getAvailableOrders({
   double? latitude,
@@ -97,9 +94,7 @@ Future<List<OrderModel>> getAvailableOrders({
     rethrow;
   }
 }
-  // ============================================
-  // 📌 GET ORDER DETAILS
-  // ============================================
+
   Future<OrderModel> getOrderDetails(int orderId) async {
     try {
       final headers = await _getHeaders();

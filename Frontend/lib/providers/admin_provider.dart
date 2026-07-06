@@ -7,9 +7,6 @@ final adminServiceProvider = Provider<AdminService>((ref) {
   return AdminService();
 });
 
-// ============================================
-// 📊 DASHBOARD PROVIDER
-// ============================================
 
 final adminDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
@@ -23,9 +20,6 @@ final adminChartDataProvider = FutureProvider.family<Map<String, dynamic>, Strin
   return response['data'];
 });
 
-// ============================================
-// 👥 USERS PROVIDER
-// ============================================
 
 final adminUsersProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
   final service = ref.read(adminServiceProvider);
@@ -44,9 +38,6 @@ final adminUserDetailsProvider = FutureProvider.family<Map<String, dynamic>, int
   return response['data'];
 });
 
-// ============================================
-// 🏪 MERCHANTS PROVIDER
-// ============================================
 
 final adminMerchantsProvider = FutureProvider<List<dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
@@ -54,33 +45,24 @@ final adminMerchantsProvider = FutureProvider<List<dynamic>>((ref) async {
   return response['data'];
 });
 
-// ============================================
-// 🚗 DRIVERS PROVIDER
-// ============================================
-
 final adminDriversProvider = FutureProvider<List<dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
   final response = await service.getDrivers();
   return response['data'];
 });
 
-// ✅ NEW: All drivers with filters
 final adminAllDriversProvider = FutureProvider.family<Map<String, dynamic>, String?>((ref, status) async {
   final service = ref.read(adminServiceProvider);
   final response = await service.getAllDrivers(status: status);
   return response;
 });
 
-// ✅ NEW: Driver applications
 final adminDriverApplicationsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
   final response = await service.getDriverApplications();
   return response;
 });
 
-// ============================================
-// 📦 ORDERS PROVIDER
-// ============================================
 
 final adminOrdersProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
   final service = ref.read(adminServiceProvider);
@@ -98,9 +80,6 @@ final adminOrderDetailsProvider = FutureProvider.family<Map<String, dynamic>, in
   return response['data'];
 });
 
-// ============================================
-// 📊 ADMIN STATE
-// ============================================
 
 class AdminState {
   final bool isLoading;
@@ -208,7 +187,7 @@ class AdminNotifier extends StateNotifier<AdminState> {
         notes: notes,
       );
       state = state.copyWith(isLoading: false);
-      await loadDrivers(); // Refresh list
+      await loadDrivers(); 
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

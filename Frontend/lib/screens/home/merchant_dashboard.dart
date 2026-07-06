@@ -81,7 +81,6 @@ class _MerchantDashboardState extends State<MerchantDashboard> {
   }
 }
 
-// ✅ محتوى الـ Dashboard للتاجر
 class _MerchantHomeContent extends StatelessWidget {
   const _MerchantHomeContent();
 
@@ -92,7 +91,6 @@ class _MerchantHomeContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // إحصائيات سريعة
           Row(
             children: [
               _StatCard(
@@ -119,7 +117,6 @@ class _MerchantHomeContent extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // آخر الطلبات
           Text(
             'Recent Orders',
             style: AppTypography.display(18, weight: FontWeight.w700),
@@ -128,7 +125,6 @@ class _MerchantHomeContent extends StatelessWidget {
           ...List.generate(3, (index) => _OrderCard()),
           const SizedBox(height: 24),
 
-          // المنتجات الأكثر مبيعاً
           Text(
             'Top Products',
             style: AppTypography.display(18, weight: FontWeight.w700),
@@ -141,7 +137,6 @@ class _MerchantHomeContent extends StatelessWidget {
   }
 }
 
-// ✅ بطاقة الإحصائيات
 class _StatCard extends StatelessWidget {
   final String title;
   final String value;
@@ -197,7 +192,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ✅ بطاقة الطلب
 class _OrderCard extends StatelessWidget {
   const _OrderCard();
 
@@ -250,7 +244,6 @@ class _OrderCard extends StatelessWidget {
   }
 }
 
-// ✅ بطاقة المنتج
 class _ProductCard extends StatelessWidget {
   const _ProductCard();
 

@@ -39,7 +39,7 @@ const DriverProfile = sequelize.define('DriverProfile', {
     allowNull: true
   },
   license_image: {
-  type: DataTypes.TEXT('long'), // ✅ بدلاً من STRING(255)
+  type: DataTypes.TEXT('long'), 
   allowNull: true
 },
   is_online: {
@@ -74,32 +74,26 @@ const DriverProfile = sequelize.define('DriverProfile', {
       min: 0
     }
   },
-  // ✅ NEW: Status management
   status: {
     type: DataTypes.ENUM('Pending', 'Active', 'Suspended', 'Rejected'),
     defaultValue: 'Pending'
   },
-  // ✅ NEW: For automatic approval
   approved_at: {
     type: DataTypes.DATE,
     allowNull: true
   },
-  // ✅ NEW: Admin notes
   admin_notes: {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  // ✅ NEW: For tracking
   onboarding_completed_at: {
     type: DataTypes.DATE,
     allowNull: true
   },
-  // ✅ NEW: Auto-approval criteria
   auto_approved: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-  // ✅ NEW: Rejection reason
   rejection_reason: {
     type: DataTypes.TEXT,
     allowNull: true
@@ -118,15 +112,7 @@ const DriverProfile = sequelize.define('DriverProfile', {
       name: 'idx_driver_profiles_status',
       fields: ['status']
     },
-    {
-      name: 'idx_driver_profiles_is_online',
-      fields: ['is_online']
-    },
-    // ✅ NEW: For better queries
-    {
-      name: 'idx_driver_profiles_auto_approved',
-      fields: ['auto_approved']
-    }
+    
   ]
 });
 

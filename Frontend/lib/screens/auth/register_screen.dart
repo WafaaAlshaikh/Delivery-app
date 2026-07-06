@@ -1,8 +1,4 @@
 // lib/screens/auth/register_screen.dart
-//
-// شاشة مخصصة موحدة: Login/Register toggle + اختيار نوع الحساب
-// (Customer / Business / Driver) + فورم ديناميكي يتغير حسب النوع،
-// مطابقة للتصميم المطلوب بالصور.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +11,6 @@ import 'verify_otp_screen.dart';
 import 'forgot_password_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
-  // true = يفتح مباشرة على تاب Login، false = يفتح على تاب Register (الافتراضي)
   final bool startOnLogin;
 
   const RegisterScreen({super.key, this.startOnLogin = false});
@@ -28,9 +23,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late bool _isLoginMode;
-  String _selectedRole = 'Customer'; // Customer | Business | Driver
-  String? _selectedActivity; // لِـ Business
-  String? _selectedVehicle; // لِـ Driver
+  String _selectedRole = 'Customer'; 
+  String? _selectedActivity; 
+  String? _selectedVehicle; 
 
   final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -51,7 +46,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     {'key': 'other', 'label': 'أخرى', 'emoji': '📦'},
   ];
 
-  // كل نوع مركبة إله لون مميز خاص فيه (بدل ما تكون كلها رمادية)
   final List<Map<String, dynamic>> _vehicleTypes = const [
     {'key': 'bicycle', 'label': 'Bicycle', 'icon': Icons.pedal_bike, 'color': Color(0xFF1E88E5)},
     {'key': 'motorcycle', 'label': 'Motorcycle', 'icon': Icons.two_wheeler, 'color': Color(0xFFE53935)},
@@ -82,7 +76,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authProvider);
     final authNotifier = ref.read(authProvider.notifier);
 
-    // التوجيه التلقائي بعد نجاح العملية (OTP)
     if (authState.authResponse?.tempToken != null &&
         authState.authResponse?.success == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -129,7 +122,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // ---------- الهيدر (اللوجو + الاسم) ----------
   Widget _buildHeader() {
     return Column(
       children: [
@@ -156,7 +148,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // ---------- تبديل Login / Register (Segmented control) ----------
   Widget _buildLoginRegisterToggle() {
     return Container(
       height: 46,
@@ -198,7 +189,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // ---------- اختيار نوع الحساب ----------
   Widget _buildAccountTypeSelector() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -288,7 +278,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // ---------- كارد تسجيل الدخول ----------
   Widget _buildLoginCard(dynamic authNotifier, bool isLoading, String? error) {
     return Form(
       key: _formKey,
@@ -371,7 +360,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // ---------- كارد التسجيل (يتغير حسب النوع) ----------
   Widget _buildRegisterCard(dynamic authNotifier, bool isLoading, String? error) {
     return Form(
       key: _formKey,
@@ -409,7 +397,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               validator: (v) => (v == null || v.isEmpty) ? 'Please enter your phone number' : null,
             ),
 
-            // ----- حقول خاصة بالـ Business -----
             if (_selectedRole == 'Business') ...[
               const SizedBox(height: 20),
               Text('Store Setup / إعدادات المتجر',
@@ -429,7 +416,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               _buildActivityGrid(),
             ],
 
-            // ----- حقول خاصة بالـ Driver -----
             if (_selectedRole == 'Driver') ...[
               const SizedBox(height: 20),
               Text('Driver Preferences / تفضيلات التوصيل',
@@ -516,7 +502,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             decoration: BoxDecoration(
-              // الإيموجي أصلًا ملون بطبيعته، فبس بنغمق الخلفية والبوردر عند الاختيار
               color: isSelected ? AppColors.primary.withOpacity(0.16) : Colors.grey[50],
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
@@ -553,7 +538,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       itemBuilder: (context, index) {
         final item = _vehicleTypes[index];
         final isSelected = _selectedVehicle == item['key'];
-        final Color vColor = item['color'] as Color; // اللون المميز لكل نوع مركبة
+        final Color vColor = item['color'] as Color;
 
         return InkWell(
           borderRadius: BorderRadius.circular(10),
@@ -561,7 +546,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             decoration: BoxDecoration(
-              // عند الاختيار: خلفية وبوردر بلون المركبة نفسه (مو أخضر عام) وأغمق شوي
               color: isSelected ? vColor.withOpacity(0.16) : Colors.grey[50],
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
@@ -572,7 +556,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // الأيقونة ملونة بلونها المميز دايمًا (مو رمادية)
                 Icon(item['icon'] as IconData, size: 18, color: vColor),
                 const SizedBox(width: 6),
                 Text(
@@ -612,7 +595,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 
-  // lib/screens/auth/register_screen.dart
 
 void _handleSignUp(dynamic authNotifier) {
   if (!_formKey.currentState!.validate()) return;
@@ -630,16 +612,14 @@ void _handleSignUp(dynamic authNotifier) {
     return;
   }
 
-  // ✅ تعديل: إرسال البيانات الصحيحة
   authNotifier.signup(
     fullName: _fullNameController.text.trim(),
     email: _emailController.text.trim(),
     password: _passwordController.text.trim(),
     phone: _phoneController.text.trim(),
-    role: _selectedRole == 'Business' ? 'Merchant' : _selectedRole, // ✅ Merchant بدل Business
+    role: _selectedRole == 'Business' ? 'Merchant' : _selectedRole, 
     businessType: _selectedRole == 'Business' ? _selectedActivity : 
                   (_selectedRole == 'Driver' ? _selectedVehicle : null),
-    // ❌ لا ترسل storeName أو vehicleType لأن الـ Backend لا يستقبلها
   );
 }
 

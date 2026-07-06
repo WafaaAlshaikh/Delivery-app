@@ -11,7 +11,6 @@ class AuthService {
   final ApiService _apiService = ApiService();
   final StorageService _storageService = StorageService();
 
-  // lib/services/auth_service.dart
 
 Future<AuthResponse> signup({
   required String fullName,
@@ -19,7 +18,7 @@ Future<AuthResponse> signup({
   required String password,
   String? phone,
   String role = 'Customer',
-  String? businessType, // ✅ جديد
+  String? businessType, 
 }) async {
   try {
     final response = await _apiService.post(
@@ -30,7 +29,7 @@ Future<AuthResponse> signup({
         'password': password,
         'phone': phone,
         'role': role,
-        'businessType': businessType, // ✅ إرسال businessType
+        'businessType': businessType, 
       },
     );
 
@@ -51,7 +50,6 @@ Future<AuthResponse> signup({
     );
   }
 }
-  // Verify Signup
   Future<AuthResponse> verifySignup({
     required String email,
     required String otp,
@@ -76,7 +74,6 @@ Future<AuthResponse> signup({
 
       final authResponse = AuthResponse.fromJson(response.data);
       
-      // Save token and user data
       if (authResponse.success && authResponse.token != null) {
         await _storageService.saveToken(authResponse.token!);
         if (authResponse.user != null) {
@@ -97,7 +94,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Resend OTP
   Future<AuthResponse> resendOtp({
     required String email,
   }) async {
@@ -130,7 +126,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Login
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -146,7 +141,6 @@ Future<AuthResponse> signup({
 
       final authResponse = AuthResponse.fromJson(response.data);
       
-      // Save token and user data
       if (authResponse.success && authResponse.token != null) {
         await _storageService.saveToken(authResponse.token!);
         if (authResponse.user != null) {
@@ -154,7 +148,6 @@ Future<AuthResponse> signup({
         }
       }
       
-      // If verification required, save temp token
       if (authResponse.requireVerification == true && authResponse.tempToken != null) {
         await _storageService.saveTempToken(authResponse.tempToken!);
       }
@@ -171,7 +164,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Forgot Password
   Future<AuthResponse> forgotPassword({
     required String email,
   }) async {
@@ -195,7 +187,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Reset Password
   Future<AuthResponse> resetPassword({
     required String email,
     required String otp,
@@ -223,19 +214,16 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Logout
   Future<AuthResponse> logout() async {
     try {
       final response = await _apiService.post(
         ApiConstants.logout,
       );
 
-      // Clear local storage regardless of response
       await _storageService.clearAll();
       
       return AuthResponse.fromJson(response.data);
     } catch (e) {
-      // Clear local storage even if API fails
       await _storageService.clearAll();
       return AuthResponse(
         success: true,
@@ -244,7 +232,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Get Profile
   Future<ApiResponse<UserModel>> getProfile() async {
     try {
       final response = await _apiService.get(
@@ -272,7 +259,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Update Profile
   Future<ApiResponse<UserModel>> updateProfile({
     String? fullName,
     String? phone,
@@ -313,7 +299,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Verify OTP only
   Future<AuthResponse> verifyOTP({
     required String email,
     required String otp,
@@ -341,17 +326,14 @@ Future<AuthResponse> signup({
     }
   }
 
-  // Check if user is logged in
   Future<bool> isLoggedIn() async {
     return await _storageService.isLoggedIn();
   }
 
-  // Get current user
   Future<UserModel?> getCurrentUser() async {
     return await _storageService.getUser();
   }
 
-  // Get token
   Future<String?> getToken() async {
     return await _storageService.getToken();
   }
@@ -389,7 +371,7 @@ Future<AuthResponse> signup({
     }
   }
 
-  // ✅ Get Driver Status
+  
   Future<Map<String, dynamic>> getDriverStatus() async {
     try {
       final response = await _apiService.get('/api/auth/driver/status');
@@ -402,7 +384,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // ✅ Check if driver can go online
   Future<Map<String, dynamic>> canGoOnline() async {
     try {
       final response = await _apiService.get('/api/auth/driver/can-go-online');
@@ -415,7 +396,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  // ✅ Resubmit driver application
   Future<AuthResponse> resubmitDriverApplication({
     required String vehicleType,
     String? vehiclePlate,

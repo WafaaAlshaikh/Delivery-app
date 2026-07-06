@@ -2,16 +2,12 @@
 import 'package:flutter/foundation.dart';
 
 class MapUtils {
-  // ✅ تحديد ما إذا كان الجهاز ويب
   static bool get isWeb => kIsWeb;
 
-  // ✅ الحصول على Google Maps API Key من البيئة
   static String get apiKey {
-    // في الإنتاج، استخدم متغير بيئة
-    return 'YOUR_GOOGLE_MAPS_API_KEY';
+    return 'AIzaSyAEGm-gX39A5x7DA9a0qSg6mEbYNmqAPPk&libraries';
   }
 
-  // ✅ إنشاء URL لـ Static Map (للويب)
   static String getStaticMapUrl({
     required double latitude,
     required double longitude,
@@ -28,7 +24,6 @@ class MapUtils {
         'key=$apiKey';
   }
 
-  // ✅ إنشاء URL لـ Embed Map (للويب)
   static String getEmbedMapUrl({
     required double latitude,
     required double longitude,
@@ -40,7 +35,6 @@ class MapUtils {
         'zoom=$zoom';
   }
 
-  // ✅ إنشاء URL لـ Directions (فتح في المتصفح)
   static String getDirectionsUrl({
     required double fromLat,
     required double fromLng,

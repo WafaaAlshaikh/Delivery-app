@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 
-/// Small coloured icon badge + title + subtitle used at the top of every
-/// auth screen instead of copy-pasted Column/Text blocks.
+
 class AuthHeader extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -55,8 +54,7 @@ class AuthHeader extends StatelessWidget {
   }
 }
 
-/// Inline error banner — one definition, used everywhere an authState.error
-/// needs to be surfaced.
+
 class AuthErrorBanner extends StatelessWidget {
   final String message;
 
@@ -89,7 +87,6 @@ class AuthErrorBanner extends StatelessWidget {
   }
 }
 
-/// "Don't have an account? Sign up" style footer row.
 class AuthFooterLink extends StatelessWidget {
   final String question;
   final String actionText;
@@ -120,7 +117,6 @@ class AuthFooterLink extends StatelessWidget {
   }
 }
 
-/// Role model for the signup role-picker.
 class RoleOption {
   final String value;
   final IconData icon;
@@ -128,8 +124,7 @@ class RoleOption {
   const RoleOption({required this.value, required this.icon, required this.label});
 }
 
-/// Segmented role picker for signup — cards instead of the old cramped
-/// pill row, so each role reads clearly on both phone and web widths.
+
 class RoleSelector extends StatelessWidget {
   final List<RoleOption> options;
   final String selected;
@@ -190,7 +185,6 @@ class RoleSelector extends StatelessWidget {
   }
 }
 
-/// A horizontal divider with centered label, e.g. between form and footer.
 class LabeledDivider extends StatelessWidget {
   final String label;
   const LabeledDivider({super.key, required this.label});

@@ -1,8 +1,5 @@
 // lib/widgets/motif/route_motif.dart
-//
-// The app's signature element: a dashed delivery route curving from a
-// "store" pin to a "home" pin, with a drifting dot that stands in for the
-// order in transit. Used on the web branding panel and behind the OTP step.
+
 import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 
@@ -84,7 +81,6 @@ class _RoutePainter extends CustomPainter {
     if (metrics.isEmpty) return;
     final metric = metrics.first;
 
-    // Dashed route line.
     final dashPaint = Paint()
       ..color = dashColor
       ..strokeWidth = 2.4
@@ -103,15 +99,12 @@ class _RoutePainter extends CustomPainter {
       distance = next + gapLength;
     }
 
-    // Start pin (store).
     final startTangent = metric.getTangentForOffset(0)!;
     _drawPin(canvas, startTangent.position, pinColor, filled: false);
 
-    // End pin (home).
     final endTangent = metric.getTangentForOffset(metric.length)!;
     _drawPin(canvas, endTangent.position, pinColor, filled: true);
 
-    // Drifting order dot.
     final dotTangent = metric.getTangentForOffset(metric.length * progress)!;
     final dotPaint = Paint()..color = dotColor;
     canvas.drawCircle(dotTangent.position, 6, dotPaint);
@@ -140,8 +133,7 @@ class _RoutePainter extends CustomPainter {
   bool shouldRepaint(covariant _RoutePainter oldDelegate) => oldDelegate.progress != progress;
 }
 
-/// Full branding panel shown on the left side of auth screens on wide/web
-/// viewports. Carries the route motif, wordmark, and a rotating value prop.
+
 class BrandPanel extends StatelessWidget {
   final String eyebrow;
   final String headline;

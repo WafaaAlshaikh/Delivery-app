@@ -21,19 +21,16 @@ class DriverOnboardingScreen extends ConsumerStatefulWidget {
 class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen> {
   final _formKey = GlobalKey<FormState>();
   
-  // Controllers
   final _vehiclePlateController = TextEditingController();
   final _vehicleColorController = TextEditingController();
   final _vehicleModelController = TextEditingController();
   final _licenseNumberController = TextEditingController();
   
-  // State
   String? _selectedVehicleType;
   String? _licenseImagePath;
   File? _licenseImageFile;
   bool _isLoading = false;
   
-  // Vehicle types
   static const List<String> _vehicleTypes = [
     'Bicycle',
     'Motorcycle', 
@@ -53,7 +50,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
 
   Future<void> _pickLicenseImage() async {
     try {
-      // Use the static pickFiles API to avoid referencing `platform` getter
       final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: false,
@@ -78,7 +74,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
   Future<void> _submitOnboarding() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // ✅ Validate vehicle type
     if (_selectedVehicleType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -106,17 +101,14 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
     if (!mounted) return;
 
     if (success) {
-      // ✅ Navigate to appropriate screen based on approval status
       final driverStatus = await authNotifier.getDriverStatus();
       
       if (driverStatus?['status'] == 'Active') {
-        // ✅ Auto-approved! Go to home
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        // ✅ Pending or needs review
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -148,7 +140,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
-            // Show confirmation dialog
             _showExitConfirmation();
           },
         ),
@@ -161,15 +152,12 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ✅ Header
                 _buildHeader(),
                 const SizedBox(height: 24),
                 
-                // ✅ Vehicle Type
                 _buildVehicleTypeDropdown(),
                 const SizedBox(height: 16),
                 
-                // ✅ Vehicle Details
                 CustomTextField(
                   controller: _vehiclePlateController,
                   label: 'Vehicle Plate',
@@ -194,7 +182,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
                 ),
                 const SizedBox(height: 12),
                 
-                // ✅ License Information
                 CustomTextField(
                   controller: _licenseNumberController,
                   label: 'License Number *',
@@ -212,15 +199,12 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
                 ),
                 const SizedBox(height: 12),
                 
-                // ✅ License Image Upload
                 _buildLicenseImageUpload(),
                 const SizedBox(height: 24),
                 
-                // ✅ Requirements Check
                 _buildRequirementsCheck(),
                 const SizedBox(height: 24),
                 
-                // ✅ Submit Button
                 CustomButton(
                   text: 'Submit for Approval',
                   icon: Icons.send_outlined,
@@ -229,7 +213,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
                 ),
                 const SizedBox(height: 16),
                 
-                // ✅ Info Text
                 _buildInfoText(),
                 const SizedBox(height: 20),
               ],
@@ -479,7 +462,6 @@ class _DriverOnboardingScreenState extends ConsumerState<DriverOnboardingScreen>
   }
 }
 
-// ✅ Requirement Item Widget
 class _RequirementItem extends StatelessWidget {
   final String text;
   final bool checked;

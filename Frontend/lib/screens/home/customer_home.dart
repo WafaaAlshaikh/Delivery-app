@@ -4,9 +4,9 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../data/models/user_model.dart';
 import '../profile/profile_screen.dart';
-import '../user/customer/browse_stores.dart';       // ✅ تغيير المسار
-import '../user/customer/cart_screen.dart';         // ✅ تغيير المسار
-import '../user/customer/order_history.dart';       // ✅ تغيير المسار
+import '../user/customer/browse_stores.dart';       
+import '../user/customer/cart_screen.dart';       
+import '../user/customer/order_history.dart';      
 
 class CustomerHome extends StatefulWidget {
   final UserModel user;
@@ -33,7 +33,7 @@ class _CustomerHomeState extends State<CustomerHome> {
     _pages = [
       const BrowseStores(),
       const CartScreen(),
-      OrderHistory(), // ✅ OrderHistory لا يحتاج user
+      OrderHistory(),
       ProfileScreen(user: widget.user, onLogout: widget.onLogout),
     ];
   }

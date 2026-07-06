@@ -16,6 +16,7 @@ import '../user/driver/earnings.dart';
 import '../user/driver/driver_profile_screen.dart';
 import '../user/driver/driver_settings_screen.dart';
 import '../auth/login_screen.dart';
+import '../user/driver/current_delivery_screen.dart';
 
 class DriverDashboard extends ConsumerStatefulWidget {
   const DriverDashboard({super.key});
@@ -29,22 +30,39 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   final LocationService _locationService = LocationService();
   bool _isSidebarOpen = false;
 
-  // ✅ قائمة الصفحات الرئيسية
   final List<Widget> _pages = const [
     _DriverHomeContent(),
     AvailableOrders(),
     MyDeliveries(),
     Earnings(),
+    CurrentDeliveryScreen(),
   ];
 
-  // ✅ قائمة عناصر الـ Sidebar
   final List<Map<String, dynamic>> _sidebarItems = [
     {'icon': Icons.dashboard_outlined, 'label': 'Dashboard', 'index': 0},
-    {'icon': Icons.local_shipping_outlined, 'label': 'Available Orders', 'index': 1},
-    {'icon': Icons.delivery_dining_outlined, 'label': 'My Deliveries', 'index': 2},
+    {
+      'icon': Icons.local_shipping_outlined,
+      'label': 'Available Orders',
+      'index': 1,
+    },
+    {
+      'icon': Icons.delivery_dining_outlined,
+      'label': 'My Deliveries',
+      'index': 2,
+    },
     {'icon': Icons.monetization_on_outlined, 'label': 'Earnings', 'index': 3},
-    {'icon': Icons.person_outline, 'label': 'Profile', 'index': 4, 'isProfile': true},
-    {'icon': Icons.settings_outlined, 'label': 'Settings', 'index': 5, 'isSettings': true},
+    {
+      'icon': Icons.person_outline,
+      'label': 'Profile',
+      'index': 4,
+      'isProfile': true,
+    },
+    {
+      'icon': Icons.settings_outlined,
+      'label': 'Settings',
+      'index': 5,
+      'isSettings': true,
+    },
   ];
 
   @override
@@ -84,7 +102,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
       _closeSidebar();
       return;
     }
-    
+
     if (index == 5) {
       Navigator.push(
         context,
@@ -109,9 +127,9 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   Future<void> _logout() async {
     final authNotifier = ref.read(authProvider.notifier);
     await authNotifier.logout();
-    
+
     if (!mounted) return;
-    
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -128,7 +146,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
       body: Stack(
         children: [
           _buildMainContent(driverState),
-          
+
           if (_isSidebarOpen)
             GestureDetector(
               onTap: _closeSidebar,
@@ -138,7 +156,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 height: double.infinity,
               ),
             ),
-          
+
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
@@ -152,10 +170,8 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     );
   }
 
-  // ============================================
-  // 📌 المحتوى الرئيسي
-  // ============================================
-  
+
+
   Widget _buildMainContent(DriverState driverState) {
     return Scaffold(
       appBar: AppBar(
@@ -251,14 +267,16 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
             activeIcon: Icon(Icons.monetization_on),
             label: 'Earnings',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.navigation_outlined),
+            activeIcon: Icon(Icons.navigation),
+            label: 'Delivery',
+          ),
         ],
       ),
     );
   }
 
-  // ============================================
-  // 📌 Sidebar
-  // ============================================
 
   Widget _buildSidebar(UserModel? user) {
     return Container(
@@ -325,10 +343,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                   const SizedBox(height: 4),
                   Text(
                     user?.email ?? '',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
@@ -371,18 +386,20 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 ],
               ),
             ),
-            
+
             const Divider(color: Colors.white24, height: 1),
-            
+
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: _sidebarItems.length,
                 itemBuilder: (context, index) {
                   final item = _sidebarItems[index];
-                  final isSelected = _currentIndex == item['index'] && 
-                      !(item['isProfile'] == true || item['isSettings'] == true);
-                  
+                  final isSelected =
+                      _currentIndex == item['index'] &&
+                      !(item['isProfile'] == true ||
+                          item['isSettings'] == true);
+
                   return _SidebarItem(
                     icon: item['icon'],
                     label: item['label'],
@@ -392,9 +409,9 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 },
               ),
             ),
-            
+
             const Divider(color: Colors.white24, height: 1),
-            
+
             Padding(
               padding: const EdgeInsets.all(16),
               child: _SidebarItem(
@@ -415,9 +432,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
@@ -430,9 +445,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
               Navigator.pop(context);
               _logout();
             },
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Logout'),
           ),
         ],
@@ -441,9 +454,6 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   }
 }
 
-// ============================================
-// 📌 Sidebar Item Widget
-// ============================================
 
 class _SidebarItem extends StatelessWidget {
   final IconData icon;
@@ -502,11 +512,7 @@ class _SidebarItem extends StatelessWidget {
                 ),
               ),
               if (isSelected)
-                const Icon(
-                  Icons.check_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
+                const Icon(Icons.check_rounded, color: Colors.white, size: 18),
             ],
           ),
         ),
@@ -515,24 +521,18 @@ class _SidebarItem extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 Driver Home Content (المحسّن)
-// ============================================
+
 
 class _DriverHomeContent extends ConsumerWidget {
   const _DriverHomeContent();
 
-  // ✅ ✅ ✅ الدالة المصححة
   String _formatNumber(dynamic value, {int decimals = 1}) {
-    // ✅ إذا كانت القيمة null
     if (value == null) {
       return decimals == 1 ? '0.0' : '0.00';
     }
-    
+
     try {
-      // ✅ إذا كانت القيمة String، نحاول تحويلها إلى num
       if (value is String) {
-        // ✅ إزالة أي أحرف غير رقمية (مثل $)
         final cleaned = value.replaceAll(RegExp(r'[^\d.]'), '');
         final number = double.tryParse(cleaned);
         if (number != null) {
@@ -540,18 +540,14 @@ class _DriverHomeContent extends ConsumerWidget {
         }
         return decimals == 1 ? '0.0' : '0.00';
       }
-      
-      // ✅ إذا كانت القيمة num
+
       if (value is num) {
         return value.toStringAsFixed(decimals);
       }
-      
-      // ✅ محاولة التحويل المباشر
+
       final number = double.parse(value.toString());
       return number.toStringAsFixed(decimals);
-      
     } catch (e) {
-      // ✅ في حالة أي خطأ، نعيد القيمة الافتراضية
       return decimals == 1 ? '0.0' : '0.00';
     }
   }
@@ -609,8 +605,7 @@ class _DriverHomeContent extends ConsumerWidget {
             const SizedBox(height: 24),
             _buildStatsSection(stats),
             const SizedBox(height: 24),
-            if (driverState.isOnline)
-              _buildUpdateLocationButton(context, ref),
+            if (driverState.isOnline) _buildUpdateLocationButton(context, ref),
             const SizedBox(height: 20),
           ],
         ),
@@ -618,7 +613,11 @@ class _DriverHomeContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildWelcomeCard(BuildContext context, DriverState driverState, UserModel? user) {
+  Widget _buildWelcomeCard(
+    BuildContext context,
+    DriverState driverState,
+    UserModel? user,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -678,10 +677,7 @@ class _DriverHomeContent extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Status: ${driverState.profile?['status'] ?? 'Pending'}',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -731,7 +727,11 @@ class _DriverHomeContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildMapSection(BuildContext context, DriverState driverState, WidgetRef ref) {
+  Widget _buildMapSection(
+    BuildContext context,
+    DriverState driverState,
+    WidgetRef ref,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -748,10 +748,14 @@ class _DriverHomeContent extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         child: DriverLocationMap(
           latitude: driverState.profile?['current_latitude'] != null
-              ? double.tryParse(driverState.profile!['current_latitude'].toString())
+              ? double.tryParse(
+                  driverState.profile!['current_latitude'].toString(),
+                )
               : null,
           longitude: driverState.profile?['current_longitude'] != null
-              ? double.tryParse(driverState.profile!['current_longitude'].toString())
+              ? double.tryParse(
+                  driverState.profile!['current_longitude'].toString(),
+                )
               : null,
           isOnline: driverState.isOnline,
           interactive: true,
@@ -779,10 +783,7 @@ class _DriverHomeContent extends ConsumerWidget {
               style: AppTypography.display(18, weight: FontWeight.w700),
             ),
             const Spacer(),
-            TextButton(
-              onPressed: () {},
-              child: const Text('View All'),
-            ),
+            TextButton(onPressed: () {}, child: const Text('View All')),
           ],
         ),
         const SizedBox(height: 12),

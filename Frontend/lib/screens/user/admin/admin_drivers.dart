@@ -45,7 +45,6 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
             ),
       body: Column(
         children: [
-          // ✅ Search and Filter
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
             child: Row(
@@ -90,7 +89,6 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
             ),
           ),
           
-          // ✅ Status Filters
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -129,13 +127,11 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
           ),
           const SizedBox(height: 12),
 
-          // ✅ Drivers List
           Expanded(
             child: driversAsync.when(
               data: (data) {
                 final drivers = data['data'] ?? [];
                 
-                // ✅ Filter by search query
                 final filteredDrivers = drivers.where((driver) {
                   final user = driver['User'] ?? {};
                   final name = (user['full_name'] ?? '').toLowerCase();
@@ -219,9 +215,7 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
   }
 }
 
-// ============================================
-// 📌 DRIVER CARD
-// ============================================
+
 
 class _DriverCard extends StatelessWidget {
   final Map<String, dynamic> driver;
@@ -270,7 +264,6 @@ class _DriverCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // ✅ Avatar
           Container(
             width: 48,
             height: 48,
@@ -292,7 +285,6 @@ class _DriverCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // ✅ Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +356,6 @@ class _DriverCard extends StatelessWidget {
             ),
           ),
 
-          // ✅ Status Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(

@@ -5,10 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/theme/app_theme.dart';
 import 'services/storage_service.dart';
 import 'screens/onboarding/splash_screen.dart'; 
+import 'services/socket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
+   WidgetsBinding.instance.addPostFrameCallback((_) {
+    SocketService.getSocket();
+  });
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -35,7 +39,7 @@ class _MyAppState extends ConsumerState<MyApp> {
               AppTheme.lightTheme.textTheme,
             ),
           ),
-          home: const SplashScreen(), // ✅ تغيير من LoginScreen إلى SplashScreen
+          home: const SplashScreen(), 
         );
       },
     );

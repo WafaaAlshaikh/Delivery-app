@@ -24,7 +24,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
   void initState() {
     super.initState();
     _loadStatus();
-    // ✅ نبدأ الـ polling بعد 5 ثواني فقط
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         _startStatusCheck();
@@ -41,7 +40,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
           _isInitialLoad = false;
         });
         
-        // ✅ إذا كان Active، اذهب للـ Home فوراً
         if (status?['status'] == 'Active') {
           if (mounted) {
             Navigator.pushReplacement(
@@ -62,7 +60,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
   }
 
   void _startStatusCheck() {
-    // ✅ منع التكرار المفرط
     if (_isChecking) return;
     
     Future.delayed(const Duration(seconds: 10), () {
@@ -87,7 +84,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
         });
       }
       
-      // ✅ إذا أصبح Active، اذهب للـ Home
       if (status?['status'] == 'Active' && mounted) {
         Navigator.pushReplacement(
           context,
@@ -96,7 +92,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
         return;
       }
       
-      // ✅ استمر في الـ polling فقط إذا كان Pending
       if (mounted && status?['status'] == 'Pending') {
         _startStatusCheck();
       }
@@ -104,7 +99,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
       print('❌ Error checking status: $e');
       if (mounted) {
         setState(() => _isChecking = false);
-        // ✅ نعيد المحاولة بعد 15 ثانية
         Future.delayed(const Duration(seconds: 15), () {
           if (mounted) {
             _startStatusCheck();
@@ -116,7 +110,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ إذا كان لا يزال يحمل
     if (_isInitialLoad) {
       return const Scaffold(
         body: Center(
@@ -146,7 +139,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ✅ Icon
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -171,7 +163,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
               ),
               const SizedBox(height: 24),
               
-              // ✅ Title
               Text(
                 needsOnboarding
                     ? '📝 Complete Your Profile'
@@ -183,7 +174,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
               ),
               const SizedBox(height: 8),
               
-              // ✅ Subtitle
               Text(
                 needsOnboarding
                     ? 'Please complete your driver profile to start delivering.'
@@ -195,7 +185,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
               ),
               const SizedBox(height: 24),
               
-              // ✅ Status Card
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -235,7 +224,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
               ),
               const SizedBox(height: 24),
               
-              // ✅ Missing Fields (if any)
               if (missingFields.isNotEmpty) ...[
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -272,7 +260,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
                 const SizedBox(height: 16),
               ],
               
-              // ✅ MAIN BUTTON: Complete Profile or Go to Home
               if (needsOnboarding || missingFields.isNotEmpty)
                 CustomButton(
                   text: 'Complete Your Profile',
@@ -287,7 +274,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
                   },
                 )
               else if (statusText == 'Pending')
-                // ✅ Show pending message with refresh
                 CustomButton(
                   text: 'Refresh Status',
                   icon: Icons.refresh_rounded,
@@ -296,7 +282,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
                   onPressed: _checkStatus,
                 )
               else
-                // ✅ Go to Home
                 CustomButton(
                   text: 'Go to Home',
                   onPressed: () {
@@ -308,7 +293,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
                 ),
               const SizedBox(height: 8),
               
-              // ✅ Loading indicator
               if (_isChecking)
                 const Padding(
                   padding: EdgeInsets.all(16.0),
@@ -326,7 +310,6 @@ class _DriverPendingScreenState extends ConsumerState<DriverPendingScreen> {
   }
 }
 
-// ✅ Status Item Widget
 class _StatusItem extends StatelessWidget {
   final String label;
   final String value;

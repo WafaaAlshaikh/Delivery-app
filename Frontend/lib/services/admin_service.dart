@@ -18,7 +18,6 @@ class AdminService {
     _dio.options.receiveTimeout = const Duration(seconds: 30);
   }
 
-  // ✅ إضافة الـ Token للطلبات
   Future<Map<String, String>> _getHeaders() async {
     final token = await _storageService.getToken();
     return {
@@ -26,9 +25,7 @@ class AdminService {
     };
   }
 
-  // ============================================
-  // 📊 DASHBOARD
-  // ============================================
+
 
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
@@ -63,9 +60,7 @@ class AdminService {
     }
   }
 
-  // ============================================
-  // 👥 USERS
-  // ============================================
+
 
   Future<Map<String, dynamic>> getUsers({
     String? role,
@@ -160,9 +155,6 @@ class AdminService {
     }
   }
 
-  // ============================================
-  // 🏪 MERCHANTS
-  // ============================================
 
   Future<Map<String, dynamic>> getMerchants() async {
     try {
@@ -180,9 +172,7 @@ class AdminService {
     }
   }
 
-  // ============================================
-  // 🚗 DRIVERS
-  // ============================================
+
 
   Future<Map<String, dynamic>> getDrivers() async {
     try {
@@ -199,10 +189,6 @@ class AdminService {
       rethrow;
     }
   }
-
-  // ============================================
-  // 📦 ORDERS
-  // ============================================
 
   Future<Map<String, dynamic>> getOrders({
     int? status,
@@ -282,10 +268,9 @@ class AdminService {
     }
   }
 
-  // ✅ Review driver application
   Future<Map<String, dynamic>> reviewDriverApplication({
     required int profileId,
-    required String action, // 'approve', 'reject', 'suspend'
+    required String action,
     String? notes,
   }) async {
     try {
@@ -307,7 +292,6 @@ class AdminService {
     }
   }
 
-  // ✅ Get driver stats
   Future<Map<String, dynamic>> getDriverStats() async {
     try {
       final headers = await _getHeaders();
@@ -324,7 +308,6 @@ class AdminService {
     }
   }
 
-  // ✅ Get all drivers
   Future<Map<String, dynamic>> getAllDrivers({String? status}) async {
     try {
       final headers = await _getHeaders();

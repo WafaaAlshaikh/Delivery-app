@@ -20,7 +20,6 @@ class BusinessCategoryScreen extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: ConstrainedBox(
-              // 👈 لمنع تمدد عناصر الـ Grid بشكل مشوه على شاشات المتصفح الكبيرة
               constraints: const BoxConstraints(maxWidth: 450),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,7 +45,7 @@ class BusinessCategoryScreen extends StatelessWidget {
                       crossAxisCount: 2,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 1.0, // جعل الكروت مربعة ومثالية للتصميم العصري
+                      childAspectRatio: 1.0, 
                       physics: const BouncingScrollPhysics(),
                       children: const [
                         _CategoryCard(
@@ -102,7 +101,7 @@ class _CategoryCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => SignupScreen(
-              role: 'Merchant', // ربط الفئة بدور Restaurant في الباكند بناءً على بنيتكِ الأساسية
+              role: 'Merchant',
               businessType: businessType,
             ),
           ),
@@ -124,7 +123,6 @@ class _CategoryCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // أيقونة الفئة بتصميم دائري بلون البراند المميز للتطبيق
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

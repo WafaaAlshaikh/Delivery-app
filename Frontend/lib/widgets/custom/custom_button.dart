@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 
-// ✅ تعريف الـ Enum
 enum CustomButtonVariant { filled, outlined, ghost }
 
 class CustomButton extends StatelessWidget {

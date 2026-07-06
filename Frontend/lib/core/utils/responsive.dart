@@ -1,7 +1,6 @@
 // lib/core/utils/responsive.dart
 import 'package:flutter/material.dart';
 
-/// Breakpoints tuned for this app: phones, tablets/foldables, and web/desktop.
 class Breakpoints {
   Breakpoints._();
   static const double tablet = 700;
@@ -24,7 +23,6 @@ class Responsive {
   static bool isTablet(BuildContext context) => typeOf(context) == DeviceType.tablet;
   static bool isMobile(BuildContext context) => typeOf(context) == DeviceType.mobile;
 
-  /// Content stays readable on very wide web windows.
   static double contentMaxWidth(BuildContext context) {
     final type = typeOf(context);
     switch (type) {
@@ -38,8 +36,7 @@ class Responsive {
   }
 }
 
-/// Centers and caps the width of any child on wide (web/desktop) viewports,
-/// while staying edge-to-edge on phones.
+
 class ResponsiveCenter extends StatelessWidget {
   final Widget child;
   final double maxWidth;

@@ -11,7 +11,7 @@ import 'widgets/admin_shell.dart';
 import 'widgets/admin_side_panel.dart';
 import 'admin_users.dart';
 import 'admin_merchants.dart';
-import 'admin_drivers.dart'; // ✅ سنقوم بإنشاء هذا الملف
+import 'admin_drivers.dart'; 
 import 'admin_orders.dart';
 import 'admin_reports.dart';
 
@@ -49,7 +49,7 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
         _AdminHomeContent(),
         AdminUsers(),
         AdminMerchants(),
-        AdminDrivers(), // ✅ شاشة إدارة السائقين
+        AdminDrivers(),
         AdminOrders(),
         AdminReports(),
       ],
@@ -57,9 +57,6 @@ class _AdminDashboardState extends ConsumerState<AdminDashboard> {
   }
 }
 
-// ============================================
-// 📌 ADMIN HOME CONTENT
-// ============================================
 
 class _AdminHomeContent extends ConsumerStatefulWidget {
   const _AdminHomeContent();
@@ -72,7 +69,6 @@ class _AdminHomeContentState extends ConsumerState<_AdminHomeContent> {
   @override
   void initState() {
     super.initState();
-    // ✅ Load data when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.refresh(adminDashboardProvider);
     });
@@ -121,9 +117,7 @@ class _AdminHomeContentState extends ConsumerState<_AdminHomeContent> {
   }
 }
 
-// ============================================
-// 📌 MAIN COLUMN
-// ============================================
+
 
 class _MainColumn extends StatelessWidget {
   final AsyncValue<Map<String, dynamic>> dashboardAsync;
@@ -138,7 +132,6 @@ class _MainColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ✅ Greeting Hero
         dashboardAsync.when(
           data: (data) => const _GreetingHero(),
           loading: () => const _HeaderCardSkeleton(),
@@ -146,7 +139,6 @@ class _MainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         
-        // ✅ Needs Your Attention
         Text('Needs Your Attention', style: AppTypography.display(16, weight: FontWeight.w700)),
         const SizedBox(height: 12),
         dashboardAsync.when(
@@ -156,7 +148,6 @@ class _MainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         
-        // ✅ Platform Overview
         Text('Platform Overview', style: AppTypography.display(18, weight: FontWeight.w700)),
         const SizedBox(height: 12),
         dashboardAsync.when(
@@ -203,7 +194,6 @@ class _MainColumn extends StatelessWidget {
                 icon: Icons.attach_money,
                 color: AppColors.success,
               ),
-              // ✅ Driver specific stats
               AdminStatCard(
                 title: 'Pending Drivers',
                 value: '${driverStats['pending'] ?? 0}',
@@ -218,7 +208,6 @@ class _MainColumn extends StatelessWidget {
               ),
             ];
 
-            // ✅ Add more stats if wide
             final displayStats = width >= 1400 ? stats : stats.take(6).toList();
 
             return GridView.count(
@@ -249,7 +238,6 @@ class _MainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 28),
 
-        // ✅ Charts
         dashboardAsync.when(
           data: (data) {
             final revenueChart = _RevenueTrendCard(data: data);
@@ -271,7 +259,6 @@ class _MainColumn extends StatelessWidget {
         ),
         const SizedBox(height: 28),
 
-        // ✅ Recent Orders
         Text('Recent Orders', style: AppTypography.display(18, weight: FontWeight.w700)),
         const SizedBox(height: 12),
         dashboardAsync.when(
@@ -311,9 +298,7 @@ class _MainColumn extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 GREETING HERO
-// ============================================
+
 
 class _GreetingHero extends StatelessWidget {
   const _GreetingHero();
@@ -443,9 +428,7 @@ class _HeaderCardSkeleton extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 ATTENTION ROW
-// ============================================
+
 
 class _AttentionRow extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -555,9 +538,6 @@ class _AttentionCard extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 RIGHT RAIL
-// ============================================
 
 class _RightRail extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -574,7 +554,6 @@ class _RightRail extends StatelessWidget {
         const WeekStrip(),
         const SizedBox(height: 16),
         
-        // ✅ Driver Applications Queue
         QueueCard(
           title: 'Driver Applications (${driverApps.length})',
           onViewAll: () {},
@@ -592,7 +571,6 @@ class _RightRail extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         
-        // ✅ New Signups
         QueueCard(
           title: 'New Signups',
           onViewAll: () {},
@@ -629,9 +607,7 @@ class _RightRail extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 DRIVER APPLICATION TILE
-// ============================================
+
 
 class _DriverApplicationTile extends ConsumerStatefulWidget {
   final Map<String, dynamic> application;
@@ -666,7 +642,6 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
             backgroundColor: AppColors.success,
           ),
         );
-        // ✅ Refresh the dashboard
         ref.refresh(adminDashboardProvider);
       }
     } catch (e) {
@@ -698,7 +673,6 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
       ),
       child: Row(
         children: [
-          // ✅ Avatar
           Container(
             width: 36,
             height: 36,
@@ -723,7 +697,6 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
           ),
           const SizedBox(width: 10),
           
-          // ✅ Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,7 +735,6 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
             ),
           ),
           
-          // ✅ Status Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
@@ -779,7 +751,6 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
             ),
           ),
           
-          // ✅ Action Buttons (only for pending)
           if (isPending && !_isProcessing) ...[
             const SizedBox(width: 4),
             GestureDetector(
@@ -845,9 +816,7 @@ class _DriverApplicationTileState extends ConsumerState<_DriverApplicationTile> 
   }
 }
 
-// ============================================
-// 📌 REVENUE TREND CARD
-// ============================================
+
 
 class _RevenueTrendCard extends StatefulWidget {
   final Map<String, dynamic> data;
@@ -1058,9 +1027,7 @@ class _TrendPoint {
   _TrendPoint(this.label, this.y);
 }
 
-// ============================================
-// 📌 ORDER STATUS CARD
-// ============================================
+
 
 class _OrderStatusCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -1172,9 +1139,7 @@ class _OrderStatusCard extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 RECENT ORDER CARD
-// ============================================
+
 
 class _RecentOrderCard extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -1255,9 +1220,3 @@ class _RecentOrderCard extends StatelessWidget {
   }
 }
 
-// ============================================
-// 📌 EXPORT
-// ============================================
-
-// ملاحظة: جميع الـ Widgets المساعدة موجودة في الملفات الأخرى
-// AdminShell, AdminStatCard, AdminSidePanel, WeekStrip, QueueCard, PersonQueueTile

@@ -95,9 +95,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
     await _checkAuth();
   }
 
-  // ============================================
-  // 📌 SIGNUP
-  // ============================================
 
   Future<void> signup({
     required String fullName,
@@ -445,9 +442,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         licenseImage: licenseImage,
       );
 
-      // ✅ استخدام response.data بدلاً من response.data (الآن موجود)
       if (response.success && response.data != null) {
-        // ✅ تحديث حالة السائق من البيانات المرتجعة
         final newDriverStatus = response.data;
         state = state.copyWith(
           isLoading: false,
@@ -471,22 +466,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // lib/providers/auth_provider.dart
-
-// ✅ Get Driver Status - مع handling للخطأ
 Future<Map<String, dynamic>?> getDriverStatus() async {
   try {
     final response = await _authService.getDriverStatus();
     if (response['success'] == true) {
       final data = response['data'];
-      // ✅ تحديث الـ state
       state = state.copyWith(driverStatus: data);
       return data;
     }
     return null;
   } catch (e) {
     print('❌ Get driver status error: $e');
-    // ✅ في حالة الخطأ، نرجع قيمة افتراضية
     return {
       'status': 'Pending',
       'needsOnboarding': true,
@@ -494,7 +484,6 @@ Future<Map<String, dynamic>?> getDriverStatus() async {
     };
   }
 }
-  // ✅ Check if driver can go online
   Future<bool> canGoOnline() async {
     try {
       final response = await _authService.canGoOnline();
@@ -504,7 +493,6 @@ Future<Map<String, dynamic>?> getDriverStatus() async {
     }
   }
 
-  // ✅ Resubmit driver application
   Future<bool> resubmitDriverApplication({
     required String vehicleType,
     String? vehiclePlate,
@@ -523,7 +511,6 @@ Future<Map<String, dynamic>?> getDriverStatus() async {
         licenseNumber: licenseNumber,
       );
 
-      // ✅ استخدام response.data
       if (response.success && response.data != null) {
         final newDriverStatus = response.data;
         state = state.copyWith(
@@ -548,16 +535,11 @@ Future<Map<String, dynamic>?> getDriverStatus() async {
     }
   }
 
-  // ============================================
-  // 📌 UTILITY FUNCTIONS
-  // ============================================
 
-  // Clear error
   void clearError() {
     state = state.copyWith(error: null);
   }
 
-  // Reset auth response
   void resetAuthResponse() {
     state = state.copyWith(authResponse: null);
   }

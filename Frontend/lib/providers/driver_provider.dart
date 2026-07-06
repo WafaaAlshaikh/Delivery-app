@@ -6,9 +6,7 @@ final driverServiceProvider = Provider<DriverService>((ref) {
   return DriverService();
 });
 
-// ============================================
-// 📊 DRIVER PROFILE
-// ============================================
+
 
 final driverProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(driverServiceProvider);
@@ -16,9 +14,6 @@ final driverProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return response['data'];
 });
 
-// ============================================
-// 📊 DRIVER STATS
-// ============================================
 
 final driverStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(driverServiceProvider);
@@ -26,9 +21,6 @@ final driverStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return response['data'];
 });
 
-// ============================================
-// 📊 DRIVER STATE (للتحكم في الـ Online/Offline)
-// ============================================
 
 class DriverState {
   final bool isLoading;
@@ -67,7 +59,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
 
   DriverNotifier(this._service) : super(DriverState());
 
-  // ✅ تحميل بيانات السائق
   Future<void> loadDriverData() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -88,7 +79,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
     }
   }
 
-  // ✅ تبديل الحالة Online/Offline
   Future<void> toggleOnline() async {
     try {
       state = state.copyWith(isLoading: true);
@@ -107,7 +97,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
     }
   }
 
-  // ✅ تحديث الموقع
   Future<void> updateLocation({
     required double latitude,
     required double longitude,
@@ -124,7 +113,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
     }
   }
 
-  // ✅ تحديث الملف الشخصي
   Future<void> updateProfile({
     String? vehicle_type,
     String? vehicle_plate,
@@ -142,7 +130,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
         license_number: license_number,
       );
       
-      // ✅ تحديث الـ profile بعد التعديل
       final updatedProfile = response['data'];
       state = state.copyWith(
         isLoading: false,
@@ -156,7 +143,6 @@ class DriverNotifier extends StateNotifier<DriverState> {
     }
   }
 
-  // ✅ مسح الخطأ
   void clearError() {
     state = state.copyWith(error: null);
   }

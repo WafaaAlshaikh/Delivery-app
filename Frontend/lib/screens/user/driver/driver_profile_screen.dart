@@ -62,13 +62,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // ✅ تحديث الملف الشخصي العام
       await ref.read(authProvider.notifier).updateProfile(
         fullName: _fullNameController.text,
         phone: _phoneController.text,
       );
 
-      // ✅ تحديث ملف السائق
       await ref.read(driverProvider.notifier).updateProfile(
         vehicle_type: _selectedVehicleType,
         vehicle_plate: _vehiclePlateController.text,
@@ -120,7 +118,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // ✅ صورة المستخدم
               Center(
                 child: Stack(
                   children: [
@@ -181,7 +178,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ✅ معلومات المستخدم
               CustomTextField(
                 controller: _fullNameController,
                 label: 'Full Name',
@@ -200,7 +196,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              // ✅ معلومات المركبة
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -217,7 +212,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
                     ),
                     const SizedBox(height: 12),
                     
-                    // ✅ نوع المركبة
                     DropdownButtonFormField<String>(
                       value: _selectedVehicleType,
                       decoration: const InputDecoration(
@@ -273,7 +267,6 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ✅ زر الحفظ
               CustomButton(
                 text: 'Save Changes',
                 icon: Icons.save_outlined,

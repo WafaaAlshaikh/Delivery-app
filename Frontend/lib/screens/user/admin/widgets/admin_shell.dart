@@ -1,8 +1,4 @@
 // lib/screens/user/admin/widgets/admin_shell.dart
-//
-// Responsive shell for the admin panel:
-// - Wide screens (web/tablet landscape, >= 900px): dark gradient sidebar rail
-// - Narrow screens (mobile): Material 3 bottom NavigationBar
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
@@ -26,9 +22,6 @@ class AdminShell extends StatelessWidget {
   final List<AdminNavItem> items;
   final List<Widget> pages;
   final List<Widget>? actions;
-
-  /// Extra header row shown only on wide/desktop layouts: search box,
-  /// notification bell and the signed-in admin's name/avatar.
   final String userName;
   final String userSubtitle;
   final int notificationCount;

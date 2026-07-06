@@ -19,7 +19,6 @@ class ApiService {
       },
     ));
 
-    // Interceptor for logging
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         if (kDebugMode) {
@@ -52,7 +51,6 @@ class ApiService {
       },
     ));
 
-    // Add token interceptor
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await _storageService.getToken();
@@ -79,7 +77,6 @@ class ApiService {
       );
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        // Token expired, handle logout
         await _storageService.clearAll();
       }
       rethrow;
@@ -118,7 +115,6 @@ class ApiService {
     );
   }
 
-  // Add temp token to headers for OTP verification
   Future<Response> postWithTempToken(
     String path, {
     required String tempToken,

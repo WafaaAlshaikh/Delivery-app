@@ -113,7 +113,6 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // ✅ Google Map
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _currentPosition!,
@@ -128,11 +127,9 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
             zoomControlsEnabled: true,
             zoomGesturesEnabled: true,
             onCameraMove: (position) {
-              // تحديث الموقع عند تحريك الخريطة (اختياري)
             },
           ),
 
-          // ✅ زر العودة للموقع الحالي
           if (widget.interactive)
             Positioned(
               bottom: 16,
@@ -160,7 +157,6 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
               ),
             ),
 
-          // ✅ حالة الـ Online/Offline
           Positioned(
             top: 16,
             left: 16,
@@ -197,7 +193,6 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
             ),
           ),
 
-          // ✅ معلومات الموقع
           Positioned(
             bottom: 16,
             left: 16,
@@ -223,7 +218,6 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
   }
 }
 
-// ✅ إصدار ويب متوافق
 class DriverLocationMapWeb extends StatelessWidget {
   final double? latitude;
   final double? longitude;
@@ -258,7 +252,6 @@ class DriverLocationMapWeb extends StatelessWidget {
       );
     }
 
-    // ✅ استخدام iframe لـ Google Maps على الـ Web
     final String embedUrl =
         'https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=${latitude},${longitude}&zoom=15';
 
@@ -271,14 +264,11 @@ class DriverLocationMapWeb extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          // ✅ iframe للخريطة
           HtmlElementView(
             viewType: 'google-maps-iframe',
-            // ملاحظة: تحتاج إلى تسجيل viewType مسبقاً
           ),
-          // أو نستخدم Image.network كبديل مؤقت
           Image.network(
-            'https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x300&markers=color:${isOnline ? 'green' : 'red'}%7C${latitude},${longitude}&key=YOUR_GOOGLE_MAPS_API_KEY',
+            'https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x300&markers=color:${isOnline ? 'green' : 'red'}%7C${latitude},${longitude}&key=AIzaSyAEGm-gX39A5x7DA9a0qSg6mEbYNmqAPPk&libraries',
             fit: BoxFit.cover,
             width: double.infinity,
             height: 300,
@@ -291,7 +281,6 @@ class DriverLocationMapWeb extends StatelessWidget {
               );
             },
           ),
-          // ✅ حالة الـ Online/Offline
           Positioned(
             top: 16,
             left: 16,

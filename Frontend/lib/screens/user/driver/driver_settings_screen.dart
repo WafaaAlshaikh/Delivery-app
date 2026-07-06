@@ -23,7 +23,6 @@ class DriverSettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // ✅ Account Section
           _SettingsSection(
             title: 'Account',
             children: [
@@ -45,7 +44,6 @@ class DriverSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // ✅ Notification Section
           _SettingsSection(
             title: 'Notifications',
             children: [
@@ -73,7 +71,6 @@ class DriverSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // ✅ Delivery Section
           _SettingsSection(
             title: 'Delivery',
             children: [
@@ -97,7 +94,6 @@ class DriverSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // ✅ Support Section
           _SettingsSection(
             title: 'Support',
             children: [
@@ -121,7 +117,6 @@ class DriverSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // ✅ About Section
           _SettingsSection(
             title: 'About',
             children: [
@@ -135,7 +130,6 @@ class DriverSettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // ✅ Logout Button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -189,7 +183,6 @@ class DriverSettingsScreen extends ConsumerWidget {
   }
 }
 
-// ✅ Settings Section Widget
 class _SettingsSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -224,7 +217,6 @@ class _SettingsSection extends StatelessWidget {
   }
 }
 
-// ✅ Settings Tile Widget
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;

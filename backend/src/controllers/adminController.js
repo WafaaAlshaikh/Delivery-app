@@ -14,19 +14,14 @@ const {
 const DriverVerificationService = require('../services/driverVerificationService');
 
 
-// ============================================
-// 📌 DASHBOARD STATS
-// ============================================
 const getDashboardStats = async (req, res) => {
   try {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📊 [ADMIN] Fetching dashboard stats');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // ✅ Get total users count
     const totalUsers = await User.count();
 
-    // ✅ Get users by role
     const customerRole = await Role.findOne({ where: { name: 'Customer' } });
     const merchantRole = await Role.findOne({ where: { name: 'Merchant' } });
     const driverRole = await Role.findOne({ where: { name: 'Driver' } });
@@ -51,27 +46,23 @@ const getDashboardStats = async (req, res) => {
       });
     }
 
-    // ✅ Get total orders
     const totalOrders = await Order.count();
 
-    // ✅ Get orders by status
     const pendingOrders = await Order.count({ 
-      where: { status_id: 1 } // Pending
+      where: { status_id: 1 }
     });
     const activeOrders = await Order.count({ 
-      where: { status_id: { [Op.between]: [2, 7] } } // Accepted to On The Way
+      where: { status_id: { [Op.between]: [2, 7] } } 
     });
     const completedOrders = await Order.count({ 
-      where: { status_id: 8 } // Delivered
+      where: { status_id: 8 }
     });
 
-    // ✅ Get total revenue
     const revenueResult = await Order.sum('total', {
-      where: { status_id: 8 } // Delivered orders only
+      where: { status_id: 8 } 
     });
     const totalRevenue = revenueResult || 0;
 
-    // ✅ Get recent orders (last 5)
     const recentOrders = await Order.findAll({
       limit: 5,
       order: [['created_at', 'DESC']],
@@ -81,7 +72,6 @@ const getDashboardStats = async (req, res) => {
       ]
     });
 
-    // ✅ Get new merchants this week
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const newMerchants = await UserRole.count({
@@ -127,9 +117,6 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET ALL USERS (with filters)
-// ============================================
 const getUsers = async (req, res) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
@@ -142,7 +129,6 @@ const getUsers = async (req, res) => {
     console.log(`   └─ page: ${page}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    // ✅ Build where clause
     const whereClause = {};
     if (search) {
       whereClause[Op.or] = [
@@ -151,7 +137,6 @@ const getUsers = async (req, res) => {
       ];
     }
 
-    // ✅ Get users
     const users = await User.findAndCountAll({
       where: whereClause,
       attributes: { exclude: ['password_hash'] },
@@ -160,7 +145,6 @@ const getUsers = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
-    // ✅ Get roles for each user
     const usersWithRoles = await Promise.all(users.rows.map(async (user) => {
       const userRoles = await UserRole.findAll({
         where: { user_id: user.user_id },
@@ -173,7 +157,6 @@ const getUsers = async (req, res) => {
       };
     }));
 
-    // ✅ Filter by role if specified
     let filteredUsers = usersWithRoles;
     if (role) {
       filteredUsers = usersWithRoles.filter(u => u.roles.includes(role));
@@ -203,9 +186,7 @@ const getUsers = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET USER DETAILS
-// ============================================
+
 const getUserDetails = async (req, res) => {
   try {
     const { id } = req.params;
@@ -225,14 +206,12 @@ const getUserDetails = async (req, res) => {
       });
     }
 
-    // ✅ Get user roles
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
       include: [{ model: Role, attributes: ['name'] }]
     });
     const roles = userRoles.map(ur => ur.Role.name);
 
-    // ✅ Get user orders count
     const ordersCount = await Order.count({
       where: { customer_id: user.user_id }
     });
@@ -260,9 +239,7 @@ const getUserDetails = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 UPDATE USER STATUS (Activate/Deactivate)
-// ============================================
+
 const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -301,9 +278,7 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 UPDATE USER ROLE
-// ============================================
+
 const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
@@ -322,7 +297,6 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    // ✅ Find the role
     const roleRecord = await Role.findOne({ where: { name: role } });
     if (!roleRecord) {
       return res.status(400).json({
@@ -331,10 +305,8 @@ const updateUserRole = async (req, res) => {
       });
     }
 
-    // ✅ Delete existing roles
     await UserRole.destroy({ where: { user_id: user.user_id } });
 
-    // ✅ Assign new role
     await UserRole.create({
       user_id: user.user_id,
       role_id: roleRecord.role_id,
@@ -359,9 +331,7 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 DELETE USER
-// ============================================
+
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -378,10 +348,8 @@ const deleteUser = async (req, res) => {
       });
     }
 
-    // ✅ Delete user roles first
     await UserRole.destroy({ where: { user_id: user.user_id } });
 
-    // ✅ Delete user
     await user.destroy();
 
     console.log(`✅ User ${user.email} deleted successfully`);
@@ -401,9 +369,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET ALL MERCHANTS
-// ============================================
+
 const getMerchants = async (req, res) => {
   try {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -418,7 +384,6 @@ const getMerchants = async (req, res) => {
       });
     }
 
-    // ✅ Get all user roles with Merchant role
     const userRoles = await UserRole.findAll({
       where: { role_id: merchantRole.role_id },
       include: [
@@ -463,9 +428,7 @@ const getMerchants = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET ALL DRIVERS
-// ============================================
+
 const getDrivers = async (req, res) => {
   try {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -520,9 +483,7 @@ const getDrivers = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET ALL ORDERS (Admin View)
-// ============================================
+
 const getOrders = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
@@ -576,9 +537,7 @@ const getOrders = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET ORDER DETAILS
-// ============================================
+
 const getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
@@ -627,9 +586,7 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 UPDATE ORDER STATUS
-// ============================================
+
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -651,7 +608,6 @@ const updateOrderStatus = async (req, res) => {
 
     await order.update({ status_id });
 
-    // ✅ Create status history entry
     const { OrderStatusHistory } = require('../models');
     await OrderStatusHistory.create({
       order_id: order.order_id,
@@ -678,9 +634,7 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// ============================================
-// 📌 GET DASHBOARD CHART DATA
-// ============================================
+
 const getChartData = async (req, res) => {
   try {
     const { period = 'week' } = req.query;
@@ -710,11 +664,10 @@ const getChartData = async (req, res) => {
         startDate.setDate(now.getDate() - 7);
     }
 
-    // ✅ Get orders by date
     const orders = await Order.findAll({
       where: {
         created_at: { [Op.gte]: startDate },
-        status_id: 8 // Delivered
+        status_id: 8 
       },
       attributes: [
         [sequelize.fn('DATE', sequelize.col('created_at')), 'date'],
@@ -769,7 +722,6 @@ const getDriverApplications = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Review driver application (manual override)
 const reviewDriverApplication = async (req, res) => {
   try {
     const { profileId } = req.params;
@@ -809,7 +761,6 @@ const reviewDriverApplication = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Get driver stats for admin dashboard
 const getDriverStats = async (req, res) => {
   try {
     const stats = await DriverVerificationService.getDriverStats();
@@ -828,7 +779,6 @@ const getDriverStats = async (req, res) => {
   }
 };
 
-// ✅ ✅ ✅ NEW: Get all drivers with filters
 const getAllDriversForAdmin = async (req, res) => {
   try {
     const { status } = req.query;

@@ -5,7 +5,7 @@ class UserModel {
   final String email;
   final String? phone;
   final String? profileImage;
-  final List<String> roles;  // ✅ Changed: String role → List<String> roles
+  final List<String> roles;  
   final bool isVerified;
   final bool isActive;
   final DateTime? lastLogin;
@@ -17,7 +17,7 @@ class UserModel {
     required this.email,
     this.phone,
     this.profileImage,
-    required this.roles,  // ✅ Changed
+    required this.roles,
     required this.isVerified,
     required this.isActive,
     this.lastLogin,
@@ -25,7 +25,6 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // ✅ Handle both String and List for roles
     List<String> rolesList = [];
     if (json['roles'] != null) {
       if (json['roles'] is List) {
@@ -34,7 +33,6 @@ class UserModel {
         rolesList = [json['roles']];
       }
     } else if (json['role'] != null) {
-      // Backward compatibility
       rolesList = [json['role']];
     }
 
@@ -44,7 +42,7 @@ class UserModel {
       email: json['email'] ?? '',
       phone: json['phone']?.toString(),
       profileImage: json['profile_image'] ?? json['profileImage'],
-      roles: rolesList,  // ✅ Changed
+      roles: rolesList,  
       isVerified: json['is_verified'] ?? json['isVerified'] ?? false,
       isActive: json['is_active'] ?? json['isActive'] ?? true,
       lastLogin: json['last_login'] != null 
@@ -63,7 +61,7 @@ class UserModel {
       'email': email,
       'phone': phone,
       'profile_image': profileImage,
-      'roles': roles,  // ✅ Changed
+      'roles': roles,  
       'is_verified': isVerified,
       'is_active': isActive,
       'last_login': lastLogin?.toIso8601String(),
@@ -71,21 +69,16 @@ class UserModel {
     };
   }
 
-  // ✅ Helper to check if user has a specific role
   bool hasRole(String role) {
     return roles.contains(role);
   }
 
-  // ✅ Helper to check if user is admin
   bool get isAdmin => roles.contains('Admin');
   
-  // ✅ Helper to check if user is merchant
   bool get isMerchant => roles.contains('Merchant');
   
-  // ✅ Helper to check if user is driver
   bool get isDriver => roles.contains('Driver');
   
-  // ✅ Helper to check if user is customer
   bool get isCustomer => roles.contains('Customer');
 
   UserModel copyWith({

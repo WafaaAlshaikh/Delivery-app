@@ -6,9 +6,7 @@ require('dotenv').config();
 const OTP_LENGTH = parseInt(process.env.OTP_LENGTH) || 6;
 const OTP_EXPIRY_MINUTES = parseInt(process.env.OTP_EXPIRY_MINUTES) || 15;
 
-// ============================================
-// 📌 GENERATE OTP
-// ============================================
+
 const generateOTP = (length = OTP_LENGTH) => {
   let otp = '';
   for (let i = 0; i < length; i++) {
@@ -17,9 +15,7 @@ const generateOTP = (length = OTP_LENGTH) => {
   return otp;
 };
 
-// ============================================
-// 📌 GENERATE TEMPORARY TOKEN
-// ============================================
+
 const generateTempToken = (data, secret = process.env.JWT_SECRET, expiryMinutes = OTP_EXPIRY_MINUTES) => {
   const jwt = require('jsonwebtoken');
   return jwt.sign(
@@ -29,11 +25,8 @@ const generateTempToken = (data, secret = process.env.JWT_SECRET, expiryMinutes 
   );
 };
 
-// ============================================
-// 📌 STORE OTP
-// ============================================
+
 const storeOTP = async (email, otp, type = 'Verification', tempToken = null, metadata = {}) => {
-  // Mark old OTPs as used
   await Otp.update(
     { is_used: true },
     {
@@ -63,9 +56,7 @@ const storeOTP = async (email, otp, type = 'Verification', tempToken = null, met
   return otpRecord;
 };
 
-// ============================================
-// 📌 VERIFY OTP
-// ============================================
+
 const verifyOTP = async (email, otp, type = 'Verification', markUsed = true) => {
   try {
     const otpRecord = await Otp.findOne({
@@ -119,9 +110,6 @@ const verifyOTP = async (email, otp, type = 'Verification', markUsed = true) => 
   }
 };
 
-// ============================================
-// 📌 DELETE OTP
-// ============================================
 const deleteOTP = async (email, type = null) => {
   const where = { email };
   if (type) {
@@ -130,9 +118,6 @@ const deleteOTP = async (email, type = null) => {
   return await Otp.destroy({ where });
 };
 
-// ============================================
-// 📌 CLEAN EXPIRED OTPs
-// ============================================
 const cleanExpiredOTPs = async () => {
   return await Otp.destroy({
     where: {
@@ -141,9 +126,6 @@ const cleanExpiredOTPs = async () => {
   });
 };
 
-// ============================================
-// 📌 CHECK IF CAN REQUEST OTP
-// ============================================
 const canRequestOTP = async (email, type = 'Verification', cooldownMinutes = 1) => {
   const recentOTP = await Otp.findOne({
     where: {

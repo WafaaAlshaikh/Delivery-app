@@ -74,7 +74,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // 🗂️ قائمة بطاقات المركبات الملونة والتفاعلية
                     _buildVehicleCard(
                       type: 'Bicycle',
                       title: 'Bicycle',
@@ -112,7 +111,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
                     
                     const SizedBox(height: 40),
 
-                    // 🏁 زر إنهاء التسجيل الفخم
                     CustomButton(
                       text: 'Complete Registration',
                       isLoading: _isLoading,
@@ -128,7 +126,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
     );
   }
 
-  // 🎴 ويدجت بناء بطاقة المركبة بشكل تفاعلي ومبهج
   Widget _buildVehicleCard({
     required String type,
     required String title,
@@ -162,7 +159,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
         ),
         child: Row(
           children: [
-            // الأيقونة الملونة التفاعلية
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.all(12),
@@ -178,7 +174,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
             ),
             const SizedBox(width: 16),
             
-            // النصوص التوضيحية
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +198,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
               ),
             ),
             
-            // علامة الصح الدائرية عند الاختيار
             if (isSelected)
               Icon(
                 Icons.check_circle_rounded,
@@ -220,7 +214,6 @@ class _DriverVehicleScreenState extends ConsumerState<DriverVehicleScreen> {
     setState(() => _isLoading = true);
 
    
-    // ✅ توجه لشاشة التسجيل مع تحديد نوع المركبة
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(

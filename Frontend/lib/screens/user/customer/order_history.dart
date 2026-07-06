@@ -21,7 +21,6 @@ class OrderHistory extends StatelessWidget {
             style: AppTypography.display(18, weight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          // ✅ تمرير index لكل بطاقة
           ...List.generate(3, (index) => _OrderHistoryCard(index: index)), // ✅ إضافة index
         ],
       ),
@@ -30,13 +29,12 @@ class OrderHistory extends StatelessWidget {
 }
 
 class _OrderHistoryCard extends StatelessWidget {
-  final int index; // ✅ إضافة index كـ parameter
+  final int index; 
 
-  const _OrderHistoryCard({required this.index}); // ✅ constructor مع index
+  const _OrderHistoryCard({required this.index});
 
   @override
   Widget build(BuildContext context) {
-    // ✅ قائمة الحالات والألوان
     final statuses = ['Delivered', 'Processing', 'Pending'];
     final colors = [AppColors.success, AppColors.primary, AppColors.warning];
     final bgColors = [AppColors.successSoft, AppColors.primarySoft, AppColors.goldSoft];
@@ -60,7 +58,7 @@ class _OrderHistoryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Order #ORD-2024-00${index + 1}', // ✅ استخدام index
+                'Order #ORD-2024-00${index + 1}', 
                 style: AppTypography.body(14, weight: FontWeight.w600),
               ),
               Container(
@@ -78,11 +76,11 @@ class _OrderHistoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Total: \$${(index + 1) * 15 + 30}.00', // ✅ استخدام index
+            'Total: \$${(index + 1) * 15 + 30}.00', 
             style: AppTypography.body(14, weight: FontWeight.w700, color: AppColors.primary),
           ),
           Text(
-            'Date: 2024-01-${15 + index}', // ✅ استخدام index
+            'Date: 2024-01-${15 + index}', 
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
         ],

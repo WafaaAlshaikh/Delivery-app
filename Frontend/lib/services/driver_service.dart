@@ -25,7 +25,6 @@ class DriverService {
     };
   }
 
-  // ✅ Get Driver Profile
   Future<Map<String, dynamic>> getDriverProfile() async {
     try {
       final headers = await _getHeaders();
@@ -42,7 +41,6 @@ class DriverService {
     }
   }
 
-  // ✅ Update Driver Profile
   Future<Map<String, dynamic>> updateDriverProfile({
     String? vehicle_type,
     String? vehicle_plate,
@@ -72,7 +70,6 @@ class DriverService {
     }
   }
 
-  // ✅ Toggle Online Status
   Future<Map<String, dynamic>> toggleOnline({bool? isOnline}) async {
     try {
       final headers = await _getHeaders();
@@ -92,7 +89,6 @@ class DriverService {
     }
   }
 
-  // ✅ Update Location
   Future<Map<String, dynamic>> updateLocation({
     required double latitude,
     required double longitude,
@@ -116,7 +112,6 @@ class DriverService {
     }
   }
 
-  // ✅ Get Driver Stats
   Future<Map<String, dynamic>> getDriverStats() async {
     try {
       final headers = await _getHeaders();
@@ -132,4 +127,148 @@ class DriverService {
       rethrow;
     }
   }
+
+
+Future<Map<String, dynamic>> getAvailableOffers() async {
+  try {
+    final headers = await _getHeaders();
+    final response = await _dio.get(
+      '/api/driver/offers',
+      options: Options(headers: headers),
+    );
+    return response.data;
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Get available offers error: $e');
+    }
+    rethrow;
+  }
+}
+
+Future<Map<String, dynamic>> acceptOffer(int offerId) async {
+  try {
+    final headers = await _getHeaders();
+    final response = await _dio.put(
+      '/api/driver/offers/$offerId/accept',
+      options: Options(headers: headers),
+    );
+    return response.data;
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Accept offer error: $e');
+    }
+    rethrow;
+  }
+}
+
+Future<Map<String, dynamic>> rejectOffer(int offerId, {String? reason}) async {
+  try {
+    final headers = await _getHeaders();
+    final response = await _dio.put(
+      '/api/driver/offers/$offerId/reject',
+      data: {'reason': reason},
+      options: Options(headers: headers),
+    );
+    return response.data;
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Reject offer error: $e');
+    }
+    rethrow;
+  }
+}
+
+
+Future<Map<String, dynamic>> updateOrderStatus({
+  required int orderId,
+  required int statusId,
+  String? notes,
+  double? latitude,
+  double? longitude,
+}) async {
+  try {
+    final headers = await _getHeaders();
+    print('📨 Updating order status:');
+    print('  orderId: $orderId');
+    print('  statusId: $statusId');
+    print('  latitude: $latitude');
+    print('  longitude: $longitude');
+    
+    final response = await _dio.put(
+      '/api/driver/orders/$orderId/status',
+      data: {
+        'status_id': statusId,
+        'notes': notes,
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      options: Options(headers: headers),
+    );
+    
+    print('✅ Update order status response: ${response.data}');
+    return response.data;
+  } catch (e) {
+    print('❌ Update order status error: $e');
+    if (e is DioException) {
+      print('❌ Response data: ${e.response?.data}');
+      print('❌ Status code: ${e.response?.statusCode}');
+    }
+    rethrow;
+  }
+}
+
+Future<Map<String, dynamic>> updateDeliveryLocation({
+  required int orderId,
+  required double latitude,
+  required double longitude,
+}) async {
+  try {
+    final headers = await _getHeaders();
+    final response = await _dio.put(
+      '/api/driver/orders/$orderId/location',
+      data: {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      options: Options(headers: headers),
+    );
+    return response.data;
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Update delivery location error: $e');
+    }
+    rethrow;
+  }
+}
+
+
+Future<Map<String, dynamic>?> getCurrentDelivery() async {
+  try {
+    final headers = await _getHeaders();
+    print('🔍 Fetching current delivery...');
+    
+    final response = await _dio.get(
+      '/api/driver/delivery/current',
+      options: Options(
+        headers: headers,
+        validateStatus: (status) {
+          return status! < 500;
+        },
+      ),
+    );
+    
+    print('📦 Current delivery response status: ${response.statusCode}');
+    print('📦 Current delivery response data: ${response.data}');
+    
+    if (response.statusCode == 404) {
+      print('❌ No active delivery (404)');
+      return null;
+    }
+    
+    return response.data;
+  } catch (e) {
+    print('❌ Get current delivery error: $e');
+    return null;
+  }
+}
 }

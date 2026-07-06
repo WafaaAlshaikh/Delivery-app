@@ -1,8 +1,4 @@
 // lib/screens/user/admin/widgets/admin_side_panel.dart
-//
-// Right-rail widgets for the wide/desktop dashboard layout, inspired by the
-// "New Applicants" / calendar strip pattern: a week strip, a quick-approve
-// list, and a small action-queue card.
 import 'package:flutter/material.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
@@ -67,9 +63,7 @@ class WeekStrip extends StatelessWidget {
   }
 }
 
-/// A generic person row used for "New Signups" style lists, with two quick
-/// action buttons (approve / reject) similar to the message/call icons in
-/// the reference dashboard.
+
 class PersonQueueTile extends StatelessWidget {
   final String name;
   final String subtitle;
@@ -146,8 +140,6 @@ class _MiniIconButton extends StatelessWidget {
   }
 }
 
-/// A card wrapping a list of [PersonQueueTile]s (or an empty state) with a
-/// title + "View All" affordance.
 class QueueCard extends StatelessWidget {
   final String title;
   final List<Widget> children;

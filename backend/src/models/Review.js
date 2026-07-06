@@ -15,7 +15,7 @@ const Review = sequelize.define('Review', {
       model: 'orders',
       key: 'order_id'
     },
-    unique: true  // One review per order (to prevent spam)
+    unique: true  
   },
   rating: {
     type: DataTypes.INTEGER,

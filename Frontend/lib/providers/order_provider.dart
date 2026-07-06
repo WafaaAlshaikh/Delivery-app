@@ -12,18 +12,14 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-// ============================================
-// 📌 AVAILABLE ORDERS PROVIDER (مع بارامترات)
-// ============================================
+
 
 final availableOrdersProvider = FutureProvider.family<List<OrderModel>, Map<String, dynamic>>((ref, params) async {
   final orderService = ref.read(orderServiceProvider);
   final locationService = ref.read(locationServiceProvider);
   
-  // ✅ جلب الموقع الحالي
   final position = await locationService.getCurrentLocation();
   
-  // ✅ قراءة البارامترات
   final sortBy = params['sortBy'] ?? 'distance';
   final filterBy = params['filterBy'] ?? 'all';
   final radius = params['radius'] ?? 10;
@@ -37,18 +33,14 @@ final availableOrdersProvider = FutureProvider.family<List<OrderModel>, Map<Stri
   );
 });
 
-// ============================================
-// 📌 ORDER DETAILS PROVIDER
-// ============================================
+
 
 final orderDetailsProvider = FutureProvider.family<OrderModel, int>((ref, orderId) async {
   final orderService = ref.read(orderServiceProvider);
   return orderService.getOrderDetails(orderId);
 });
 
-// ============================================
-// 📌 ORDER STATE (مع الفلاتر)
-// ============================================
+
 
 class OrderState {
   final bool isLoading;
@@ -92,7 +84,6 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
   OrderNotifier(this._orderService, this._locationService) : super(OrderState());
 
-  // ✅ Load available orders with filters
   Future<void> loadAvailableOrders({
     String sortBy = 'distance',
     String filterBy = 'all',
@@ -126,7 +117,6 @@ class OrderNotifier extends StateNotifier<OrderState> {
     }
   }
 
-  // ✅ Refresh orders
   Future<void> refreshOrders() async {
     state = state.copyWith(isRefreshing: true);
     
@@ -154,7 +144,6 @@ class OrderNotifier extends StateNotifier<OrderState> {
     }
   }
 
-  // ✅ Clear error
   void clearError() {
     state = state.copyWith(error: null);
   }

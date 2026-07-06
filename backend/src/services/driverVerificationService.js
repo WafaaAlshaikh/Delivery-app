@@ -5,48 +5,33 @@ const { Op } = require('sequelize');
 
 class DriverVerificationService {
   
-  /**
-   * Check if a driver meets all auto-approval criteria
-   */
+  
   static async checkAutoApproval(driverProfile) {
     const checks = {
-      // 1. Basic info check
       hasBasicInfo: false,
-      // 2. License check
       hasValidLicense: false,
-      // 3. Vehicle check
       hasValidVehicle: false,
-      // 4. Age/Experience check (if applicable)
-      hasValidExperience: true, // Default true, can be customized
-      // 5. Document check (for future)
-      hasValidDocuments: true, // Default true
+      hasValidExperience: true, 
+      hasValidDocuments: true, 
     };
 
-    // ✅ Check 1: Basic Information
     if (driverProfile.license_number && 
         driverProfile.vehicle_type && 
         driverProfile.vehicle_plate) {
       checks.hasBasicInfo = true;
     }
 
-    // ✅ Check 2: License validation (simple format check)
     if (driverProfile.license_number && 
         driverProfile.license_number.length >= 6) {
       checks.hasValidLicense = true;
     }
 
-    // ✅ Check 3: Vehicle validation
     const validVehicleTypes = ['Bicycle', 'Motorcycle', 'Car', 'Van', 'Company'];
     if (driverProfile.vehicle_type && 
         validVehicleTypes.includes(driverProfile.vehicle_type)) {
       checks.hasValidVehicle = true;
     }
 
-    // ✅ Check 4: Additional checks (can be customized)
-    // For example: check if driver has completed required training
-    // or has a minimum rating
-
-    // ✅ All checks passed
     const allPassed = Object.values(checks).every(check => check === true);
     
     return {
@@ -62,9 +47,7 @@ class DriverVerificationService {
     };
   }
 
-  /**
-   * Process auto-approval for a driver
-   */
+  
   static async processAutoApproval(profileId) {
     try {
       const driverProfile = await DriverProfile.findByPk(profileId, {
@@ -75,7 +58,6 @@ class DriverVerificationService {
         throw new Error('Driver profile not found');
       }
 
-      // ✅ Only process if status is Pending
       if (driverProfile.status !== 'Pending') {
         return {
           success: false,
@@ -83,11 +65,9 @@ class DriverVerificationService {
         };
       }
 
-      // ✅ Run all checks
       const verification = await this.checkAutoApproval(driverProfile);
 
       if (verification.passed) {
-        // ✅ AUTO-APPROVE
         await driverProfile.update({
           status: 'Active',
           approved_at: new Date(),
@@ -95,10 +75,8 @@ class DriverVerificationService {
           onboarding_completed_at: new Date()
         });
 
-        // ✅ Send approval notification to driver
         await this.sendApprovalNotification(driverProfile.User);
 
-        // ✅ Notify admins
         await this.notifyAdminsOfNewDriver(driverProfile);
 
         return {
@@ -108,8 +86,6 @@ class DriverVerificationService {
           verificationDetails: verification.details
         };
       } else {
-        // ❌ Not all criteria met - keep as Pending
-        // ✅ Send notification to admin about incomplete profile
         await this.notifyAdminsOfIncompleteProfile(driverProfile, verification.details);
 
         return {
@@ -126,9 +102,7 @@ class DriverVerificationService {
     }
   }
 
-  /**
-   * Send approval notification to driver
-   */
+
   static async sendApprovalNotification(user) {
     const subject = '🎉 Congratulations! Your driver account is active';
     const text = `
@@ -152,11 +126,8 @@ class DriverVerificationService {
     await sendEmail(user.email, subject, text);
   }
 
-  /**
-   * Notify all admins about new driver
-   */
+
   static async notifyAdminsOfNewDriver(driverProfile) {
-    // ✅ Get all admin users
     const { UserRole, Role, User } = require('../models');
     
     const adminRole = await Role.findOne({ where: { name: 'Admin' } });
@@ -188,15 +159,12 @@ class DriverVerificationService {
       Delivery App System
     `;
 
-    // ✅ Send email to all admins
     for (const admin of adminUsers) {
       await sendEmail(admin.User.email, subject, text);
     }
   }
 
-  /**
-   * Notify admins about incomplete driver profile
-   */
+
   static async notifyAdminsOfIncompleteProfile(driverProfile, missingChecks) {
     const { UserRole, Role, User } = require('../models');
     
@@ -240,9 +208,7 @@ class DriverVerificationService {
     }
   }
 
-  /**
-   * Admin manual review (override auto-approval)
-   */
+
   static async adminReview(profileId, action, notes = '') {
     try {
       const driverProfile = await DriverProfile.findByPk(profileId);
@@ -254,7 +220,7 @@ class DriverVerificationService {
         await driverProfile.update({
           status: 'Active',
           approved_at: new Date(),
-          auto_approved: false, // Manual approval
+          auto_approved: false,
           admin_notes: notes,
           onboarding_completed_at: new Date()
         });
@@ -274,7 +240,6 @@ class DriverVerificationService {
           rejection_reason: notes
         });
 
-        // Send rejection notification to driver
         await this.sendRejectionNotification(driverProfile.User, notes);
 
         return {
@@ -302,9 +267,7 @@ class DriverVerificationService {
     }
   }
 
-  /**
-   * Send rejection notification to driver
-   */
+ 
   static async sendRejectionNotification(user, reason) {
     const subject = 'Driver Application Status Update';
     const text = `
@@ -323,9 +286,7 @@ class DriverVerificationService {
     await sendEmail(user.email, subject, text);
   }
 
-  /**
-   * Get drivers by status for admin
-   */
+  
   static async getDriversByStatus(status = null) {
     const where = {};
     if (status) {
@@ -344,9 +305,7 @@ class DriverVerificationService {
     return drivers;
   }
 
-  /**
-   * Get driver statistics for admin dashboard
-   */
+
   static async getDriverStats() {
     const stats = {
       total: await DriverProfile.count(),

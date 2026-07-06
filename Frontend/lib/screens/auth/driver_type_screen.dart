@@ -22,7 +22,6 @@ class DriverTypeScreen extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
               child: ConstrainedBox(
-                // 👈 حماية الواجهة من التمدد على الـ Web وجعلها متناسقة
                 constraints: const BoxConstraints(maxWidth: 450),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -44,7 +43,6 @@ class DriverTypeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
 
-                    // 1. خيار الموتور (Motorcycle)
                     _buildVehicleCard(
                       context: context,
                       title: 'Motorcycle',
@@ -54,7 +52,6 @@ class DriverTypeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. خيار السيارة/الكابينة (Car / Cab)
                     _buildVehicleCard(
                       context: context,
                       title: 'Car / Cab',
@@ -64,7 +61,6 @@ class DriverTypeScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // 3. خيار شركة توصيل (Delivery Company)
                     _buildVehicleCard(
                       context: context,
                       title: 'Delivery Company',
@@ -97,7 +93,7 @@ class DriverTypeScreen extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => SignupScreen(
               role: 'Driver',
-              businessType: vehicleValue, // تمرير نوع المركبة كـ businessType لشاشة التسجيل
+              businessType: vehicleValue, 
             ),
           ),
         );
@@ -118,7 +114,6 @@ class DriverTypeScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // الأيقونة محاطة بخلفية خضراء خفيفة متناسقة
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(

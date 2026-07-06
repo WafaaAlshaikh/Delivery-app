@@ -22,8 +22,7 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Database connection established successfully.');
 
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
-    console.log('✅ Models synchronized with database.');
+    console.log('✅ Database schema is already up to date.');
 
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);

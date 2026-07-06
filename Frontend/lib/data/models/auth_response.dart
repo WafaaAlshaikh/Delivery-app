@@ -9,7 +9,7 @@ class AuthResponse {
   final UserModel? user;
   final bool? requireVerification;
   final String? expiresIn;
-  final Map<String, dynamic>? driverStatus; // ✅ جديد
+  final Map<String, dynamic>? driverStatus; 
   final Map<String, dynamic>? data;
 
   AuthResponse({
@@ -20,8 +20,8 @@ class AuthResponse {
     this.user,
     this.requireVerification,
     this.expiresIn,
-    this.driverStatus, // ✅ جديد
-    this.data, // ✅ جديد
+    this.driverStatus, 
+    this.data, 
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
@@ -36,7 +36,6 @@ class AuthResponse {
       driverStatus: json['driverStatus'] != null 
           ? Map<String, dynamic>.from(json['driverStatus']) 
           : null,
-      // ✅ استخراج data إذا وجد
       data: json['data'] != null 
           ? Map<String, dynamic>.from(json['data']) 
           : null,

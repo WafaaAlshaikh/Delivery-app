@@ -25,10 +25,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _decideNextScreen() async {
-    // ✅ نستنى شوي عشان الشعار يبين، وبنفس الوقت auth بيتهيأ بالخلفية
     final minSplashTime = Future.delayed(const Duration(milliseconds: 1200));
 
-    // ✅ ننتظر لحد ما authProvider يخلص التهيئة (isInitialized = true)
     while (!ref.read(authProvider).isInitialized) {
       await Future.delayed(const Duration(milliseconds: 50));
     }

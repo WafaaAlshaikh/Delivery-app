@@ -47,7 +47,7 @@ const Order = sequelize.define('Order', {
       model: 'order_statuses',
       key: 'status_id'
     },
-    defaultValue: 1  // Assuming 1 = 'Pending'
+    defaultValue: 1 
   },
   subtotal: {
     type: DataTypes.DECIMAL(10, 2),

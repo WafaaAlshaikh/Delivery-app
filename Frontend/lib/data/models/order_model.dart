@@ -52,7 +52,6 @@ class OrderModel {
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
-    // ✅ دالة مساعدة لتحويل آمن إلى double
     double _toDouble(dynamic value) {
       if (value == null) return 0.0;
       if (value is double) return value;
@@ -64,7 +63,6 @@ class OrderModel {
       return 0.0;
     }
 
-    // ✅ دالة مساعدة لتحويل آمن إلى int
     int _toInt(dynamic value) {
       if (value == null) return 0;
       if (value is int) return value;
@@ -76,7 +74,6 @@ class OrderModel {
       return 0;
     }
 
-    // ✅ دالة مساعدة لتحويل آمن إلى bool
     bool _toBool(dynamic value) {
       if (value == null) return false;
       if (value is bool) return value;
@@ -85,7 +82,6 @@ class OrderModel {
       return false;
     }
 
-    // ✅ دالة مساعدة لتحويل آمن إلى double? (nullable)
     double? _toDoubleNullable(dynamic value) {
       if (value == null) return null;
       if (value is double) return value;
@@ -97,7 +93,6 @@ class OrderModel {
       return null;
     }
 
-    // ✅ دالة مساعدة لتحويل آمن إلى DateTime
     DateTime _toDateTime(dynamic value) {
       if (value == null) return DateTime.now();
       if (value is DateTime) return value;
@@ -111,7 +106,6 @@ class OrderModel {
       return DateTime.now();
     }
 
-    // ✅ قراءة الحقول بأمان
     final isExpress = _toBool(json['is_express']);
     final orderWeight = _toDouble(json['order_weight']);
     final requiresHeavyVehicle = _toBool(json['requires_heavy_vehicle']);
@@ -145,7 +139,6 @@ class OrderModel {
     );
   }
 
-  // ✅ Getter لون حالة المركبة
   Color get vehicleMatchColor {
     switch (vehicleMatch) {
       case 'perfect':
@@ -159,7 +152,6 @@ class OrderModel {
     }
   }
 
-  // ✅ Getter نص حالة المركبة
   String get vehicleMatchText {
     switch (vehicleMatch) {
       case 'perfect':
@@ -174,9 +166,6 @@ class OrderModel {
   }
 }
 
-// ============================================
-// 📌 BusinessModel
-// ============================================
 
 class BusinessModel {
   final int businessId;
@@ -221,9 +210,6 @@ class BusinessModel {
   }
 }
 
-// ============================================
-// 📌 CustomerModel
-// ============================================
 
 class CustomerModel {
   final int userId;
@@ -245,9 +231,6 @@ class CustomerModel {
   }
 }
 
-// ============================================
-// 📌 AddressModel
-// ============================================
 
 class AddressModel {
   final int addressId;
@@ -300,9 +283,6 @@ class AddressModel {
   }
 }
 
-// ============================================
-// 📌 OrderStatusModel
-// ============================================
 
 class OrderStatusModel {
   final int statusId;
@@ -323,10 +303,6 @@ class OrderStatusModel {
     );
   }
 }
-
-// ============================================
-// 📌 OrderItemModel
-// ============================================
 
 class OrderItemModel {
   final int itemId;

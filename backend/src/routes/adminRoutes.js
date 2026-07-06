@@ -21,39 +21,22 @@ const {
   getAllDriversForAdmin
 } = require('../controllers/adminController');
 
-// ============================================
-// 📌 ALL ROUTES REQUIRE AUTH + ADMIN
-// ============================================
 router.use(auth, adminOnly);
 
-// ============================================
-// 📌 DASHBOARD
-// ============================================
 router.get('/stats', getDashboardStats);
 router.get('/chart-data', getChartData);
 
-// ============================================
-// 📌 USERS
-// ============================================
 router.get('/users', getUsers);
 router.get('/users/:id', getUserDetails);
 router.put('/users/:id/status', updateUserStatus);
 router.put('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
 
-// ============================================
-// 📌 MERCHANTS
-// ============================================
 router.get('/merchants', getMerchants);
 
-// ============================================
-// 📌 DRIVERS
-// ============================================
 router.get('/drivers', getDrivers);
 
-// ============================================
-// 📌 ORDERS
-// ============================================
+
 router.get('/orders', getOrders);
 router.get('/orders/:id', getOrderDetails);
 router.put('/orders/:id/status', updateOrderStatus);

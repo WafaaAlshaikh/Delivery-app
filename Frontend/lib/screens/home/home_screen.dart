@@ -7,7 +7,6 @@ import 'customer_home.dart';
 import 'merchant_dashboard.dart';
 import 'driver_dashboard.dart';
 import '../user/admin/admin_dashboard.dart';
-import '../auth/driver_pending_screen.dart';
 import '../auth/driver_rejected_screen.dart';
 import '../auth/driver_onboarding_screen.dart';
 
@@ -27,7 +26,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ تأخير بسيط للتأكد من أن كل شيء جاهز
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkDriverStatus();
     });
@@ -50,9 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _hasError = false;
             });
             
-            // ✅ إذا كان السائق Active، نذهب للـ Dashboard فوراً
             if (_driverStatus == 'Active') {
-              // لا حاجة لفعل شيء، الـ build سيعرض DriverDashboard
             }
           }
         } catch (e) {
@@ -61,7 +57,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             setState(() {
               _isChecking = false;
               _hasError = true;
-              // ✅ في حالة الخطأ، نفترض أنه يحتاج إلى إكمال الملف
               _needsOnboarding = true;
               _driverStatus = 'Pending';
             });
@@ -90,16 +85,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.watch(authProvider);
     final user = authState.user;
 
-    // ✅ إذا كان auth لا يزال يتحقق
     if (!authState.isInitialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // ✅ إذا كان هناك مستخدم
     if (user == null) {
-      // ✅ المستخدم غير مسجل دخول → اذهب لتسجيل الدخول
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           Navigator.pushReplacement(
@@ -113,7 +105,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    // ✅ إذا كان لا يزال يتحقق من حالة السائق
     if (_isChecking) {
       return const Scaffold(
         body: Center(
@@ -129,7 +120,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    // ✅ في حالة الخطأ
     if (_hasError) {
       return Scaffold(
         body: Center(
@@ -161,28 +151,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    // ✅ Driver specific check
     if (user.isDriver) {
-      // ✅ إذا كان السائق يحتاج إلى إكمال الملف
       if (_needsOnboarding || _driverStatus == 'Pending' || _driverStatus == null) {
         return const DriverOnboardingScreen();
       }
       
-      // ✅ إذا تم رفض السائق
       if (_driverStatus == 'Rejected') {
         return const DriverRejectedScreen();
       }
       
-      // ✅ إذا كان السائق نشطاً
       if (_driverStatus == 'Active') {
         return const DriverDashboard();
       }
       
-      // ✅ Fallback: أي حالة أخرى → اذهب لإكمال الملف
       return const DriverOnboardingScreen();
     }
 
-    // ✅ Role-based navigation for other users
     if (user.isAdmin) {
       return const AdminDashboard();
     } else if (user.isMerchant) {
@@ -190,7 +174,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } else if (user.isDriver) {
       return const DriverDashboard();
     } else {
-      // Customer (default)
       final authNotifier = ref.read(authProvider.notifier);
       return CustomerHome(
         user: user,

@@ -9,7 +9,6 @@ class AdminStatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  /// Optional trend, e.g. 12.5 means +12.5%. Pass a negative number for a drop.
   final double? trend;
 
   const AdminStatCard({

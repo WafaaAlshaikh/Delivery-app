@@ -1,7 +1,6 @@
 // lib/screens/auth/role_selection_screen.dart
 import 'package:flutter/material.dart';
-import '../../core/theme/colors.dart'; // ✅ تغيير من AppTheme إلى AppColors
-// import '../../core/theme/app_theme.dart'; // ❌ حذف هذا السطر
+import '../../core/theme/colors.dart'; 
 import 'signup_screen.dart';
 import 'business_category_screen.dart';
 import 'driver_type_screen.dart';
@@ -46,7 +45,6 @@ class RoleSelectionScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     
-                    // ✅ إصلاح: استخدام Navigator.pushReplacement أو push
                     _RoleCard(
                       title: 'Customer',
                       subtitle: 'Order food, medicine, groceries, and more',
@@ -102,27 +100,26 @@ class RoleSelectionScreen extends StatelessWidget {
   }
 }
 
-// ✅ إصلاح _RoleCard: إضافة onTap كـ callback
 class _RoleCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
   final String role;
-  final VoidCallback onTap; // ✅ جديد
+  final VoidCallback onTap; 
 
   const _RoleCard({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.role,
-    required this.onTap, // ✅ جديد
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: onTap, // ✅ استخدام الـ callback
+      onTap: onTap, 
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(

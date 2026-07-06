@@ -13,7 +13,6 @@ class Earnings extends ConsumerWidget {
     final driverState = ref.watch(driverProvider);
     final stats = driverState.stats ?? {};
 
-    // ✅ بيانات وهمية للمعاملات
     final transactions = [
       {'order': '001', 'date': '2024-01-15', 'amount': '\$8.50'},
       {'order': '002', 'date': '2024-01-16', 'amount': '\$6.00'},
@@ -26,7 +25,6 @@ class Earnings extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // ✅ بطاقة الأرباح الإجمالية
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -75,7 +73,6 @@ class Earnings extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
 
-          // ✅ قائمة المعاملات
           Row(
             children: [
               Text(
