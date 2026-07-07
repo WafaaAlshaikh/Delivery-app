@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../data/models/offer_model.dart';
@@ -59,12 +60,13 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
     _socket?.on('offer_taken', (data) {
       if (mounted) {
+        final tr = context.tr;
         setState(() {
           _offers.removeWhere((o) => o.offerId == data['offerId']);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data['message'] ?? 'Order taken by another driver'),
+            content: Text(data['message'] ?? tr.t('order_taken_by_another')),
             backgroundColor: AppColors.warning,
           ),
         );
@@ -81,12 +83,13 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
     _socket?.on('offer_accepted', (data) {
       if (mounted) {
+        final tr = context.tr;
         setState(() {
           _offers.removeWhere((o) => o.offerId == data['offerId']);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ ${data['message'] ?? 'Order accepted!'}'),
+            content: Text('✅ ${data['message'] ?? tr.t('order_accepted')}'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -129,6 +132,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
   }
 
   void _showOfferNotification(OfferModel offer) {
+    final tr = context.tr;
     final businessName = offer.order.business.name;
     
     ScaffoldMessenger.of(context).showSnackBar(
@@ -139,7 +143,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'New offer from $businessName',
+                tr.t('new_offer_from').replaceAll('{name}', businessName),
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -148,7 +152,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
         backgroundColor: AppColors.primary,
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
-          label: 'View',
+          label: tr.t('view'),
           textColor: Colors.white,
           onPressed: () {
             // التمرير إلى العرض
@@ -170,16 +174,17 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final driverState = ref.watch(driverProvider);
     final isOnline = driverState.isOnline;
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: _buildContent(isOnline),
+      body: _buildContent(tr, isOnline),
     );
   }
 
-  Widget _buildContent(bool isOnline) {
+  Widget _buildContent(AppLocalizations tr, bool isOnline) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -199,7 +204,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loadOffers,
-              child: const Text('Retry'),
+              child: Text(tr.t('retry')),
             ),
           ],
         ),
@@ -231,18 +236,20 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
   }
 
   Future<void> _acceptOffer(OfferModel offer) async {
+    final tr = context.tr;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text('Accept Order'),
+        title: Text(tr.t('accept_order')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Are you sure you want to accept this order?'),
+            Text(tr.t('accept_order_confirm')),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
@@ -254,19 +261,19 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Store: ${offer.order.business.name}',
+                    '${tr.t('store')}: ${offer.order.business.name}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    'Total: \$${offer.order.total.toStringAsFixed(2)}',
+                    '${tr.t('total')}: \$${offer.order.total.toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    'Earning: \$${offer.order.estimatedEarning?.toStringAsFixed(2) ?? '0.00'}',
+                    '${tr.t('earning')}: \$${offer.order.estimatedEarning?.toStringAsFixed(2) ?? '0.00'}',
                     style: const TextStyle(color: AppColors.success),
                   ),
                   Text(
-                    'Distance: ${offer.order.distance?.toStringAsFixed(1) ?? '?'} km',
+                    '${tr.t('distance')}: ${offer.order.distance?.toStringAsFixed(1) ?? '?'} km',
                   ),
                 ],
               ),
@@ -276,14 +283,14 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(tr.t('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
             ),
-            child: const Text('Accept'),
+            child: Text(tr.t('accept')),
           ),
         ],
       ),
@@ -301,25 +308,27 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
   }
 
   Future<void> _rejectOffer(OfferModel offer) async {
+    final tr = context.tr;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text('Reject Order'),
-        content: const Text('Are you sure you want to reject this order?'),
+        title: Text(tr.t('reject_order')),
+        content: Text(tr.t('reject_order_confirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(tr.t('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
-            child: const Text('Reject'),
+            child: Text(tr.t('reject')),
           ),
         ],
       ),

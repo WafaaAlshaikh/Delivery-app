@@ -1,5 +1,6 @@
 // lib/screens/user/admin/widgets/admin_stat_card.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -8,7 +9,6 @@ class AdminStatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-
   final double? trend;
 
   const AdminStatCard({
@@ -22,9 +22,11 @@ class AdminStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final hasTrend = trend != null;
     final isUp = (trend ?? 0) >= 0;
     final trendColor = isUp ? AppColors.success : AppColors.error;
+    final trendText = isUp ? tr.t('up') : tr.t('down'); 
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -98,7 +100,7 @@ class AdminStatCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            title,
+            tr.t(title), 
             style: AppTypography.body(12, color: AppColors.ink500, weight: FontWeight.w500),
             overflow: TextOverflow.ellipsis,
           ),

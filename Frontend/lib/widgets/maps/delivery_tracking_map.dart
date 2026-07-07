@@ -3,7 +3,8 @@ import 'dart:math' as Math;
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart'; 
+import 'package:geolocator/geolocator.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 
@@ -50,6 +51,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
   }
 
   void _updateMarkers() {
+    final tr = AppLocalizations.of(context);
     final markers = <Marker>{};
 
     if (widget.businessLocation != null) {
@@ -60,7 +62,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueOrange,
           ),
-          infoWindow: const InfoWindow(title: 'Restaurant'),
+          infoWindow: InfoWindow(title: tr?.t('restaurant') ?? 'Restaurant'),
         ),
       );
     }
@@ -73,7 +75,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
           icon: BitmapDescriptor.defaultMarkerWithHue(
             BitmapDescriptor.hueRed,
           ),
-          infoWindow: const InfoWindow(title: 'Customer'),
+          infoWindow: InfoWindow(title: tr?.t('customer') ?? 'Customer'),
         ),
       );
     }
@@ -90,7 +92,9 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
           position: widget.driverLocation!,
           icon: BitmapDescriptor.defaultMarkerWithHue(color),
           infoWindow: InfoWindow(
-            title: isDelivered ? 'Delivered ✅' : 'Driver 🚗',
+            title: isDelivered 
+                ? '${tr?.t('delivered') ?? 'Delivered'} ✅' 
+                : '${tr?.t('driver') ?? 'Driver'} 🚗',
           ),
         ),
       );
@@ -191,16 +195,18 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     if (widget.businessLocation == null || widget.customerLocation == null) {
       return Container(
         color: Colors.grey.shade100,
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.map_outlined, size: 48, color: Colors.grey),
-              SizedBox(height: 8),
-              Text('Loading map...'),
+              const Icon(Icons.map_outlined, size: 48, color: Colors.grey),
+              const SizedBox(height: 8),
+              Text(tr.t('loading_map')), 
             ],
           ),
         ),
@@ -250,7 +256,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
               children: [
                 _DistanceInfo(
                   icon: Icons.storefront_outlined,
-                  label: 'Store',
+                  label: tr.t('store'),
                   distance: _calculateDistance(
                     widget.driverLocation,
                     widget.businessLocation,
@@ -259,7 +265,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
                 const VerticalDivider(),
                 _DistanceInfo(
                   icon: Icons.location_on_outlined,
-                  label: 'Customer',
+                  label: tr.t('customer'), 
                   distance: _calculateDistance(
                     widget.driverLocation,
                     widget.customerLocation,
@@ -268,7 +274,7 @@ class _DeliveryTrackingMapState extends State<DeliveryTrackingMap> {
                 const VerticalDivider(),
                 _DistanceInfo(
                   icon: Icons.route_outlined,
-                  label: 'Total',
+                  label: tr.t('total'), 
                   distance: _calculateDistance(
                     widget.businessLocation,
                     widget.customerLocation,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/driver_provider.dart';
@@ -183,6 +184,8 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -202,19 +205,20 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'No Active Delivery',
+                tr.t('no_active_delivery'),
                 style: AppTypography.display(20, weight: FontWeight.w700, color: AppColors.ink500),
               ),
               const SizedBox(height: 8),
               Text(
-                'You don\'t have any active delivery right now',
+                tr.t('no_active_delivery_desc'),
                 style: AppTypography.body(14, color: AppColors.ink300),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: _loadCurrentDelivery,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Refresh'),
+                label: Text(tr.t('refresh')),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -246,7 +250,7 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadCurrentDelivery,
-                child: const Text('Retry'),
+                child: Text(tr.t('retry')),
               ),
             ],
           ),
@@ -270,7 +274,7 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
       backgroundColor: AppColors.canvas,
       appBar: AppBar(
         title: Text(
-          'Current Delivery',
+          tr.t('current_delivery'),
           style: AppTypography.display(18, weight: FontWeight.w700),
         ),
         backgroundColor: Colors.transparent,
@@ -285,7 +289,7 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
               border: Border.all(color: _getStatusColor(_currentStatus)),
             ),
             child: Text(
-              statusName,
+              _getStatusText(tr, _currentStatus),
               style: AppTypography.body(
                 12,
                 weight: FontWeight.w600,
@@ -331,16 +335,16 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
                     Expanded(
                       child: _InfoTile(
                         icon: Icons.storefront_outlined,
-                        title: business['name'] ?? 'Unknown Store',
-                        subtitle: 'Pickup Location',
+                        title: business['name'] ?? tr.t('unknown_store'),
+                        subtitle: tr.t('pickup_location'),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: _InfoTile(
                         icon: Icons.person_outline,
-                        title: customer['full_name'] ?? 'Unknown Customer',
-                        subtitle: address['street'] ?? 'Unknown Address',
+                        title: customer['full_name'] ?? tr.t('unknown_customer'),
+                        subtitle: address['street'] ?? tr.t('unknown_address'),
                       ),
                     ),
                   ],
@@ -349,7 +353,7 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
                 const Divider(height: 1),
                 const SizedBox(height: 12),
                 
-                _buildStatusButtons(),
+                _buildStatusButtons(tr),
               ],
             ),
           ),
@@ -358,127 +362,138 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
     );
   }
 
+  Widget _buildStatusButtons(AppLocalizations tr) {
+    final current = _currentStatus;
+    
+    final canPickUp = current == 5; 
+    final canOnTheWay = current == 6; 
+    final canDeliver = current == 7;
 
-Widget _buildStatusButtons() {
-  final current = _currentStatus;
-  
-  final canPickUp = current == 5; 
-  final canOnTheWay = current == 6; 
-  final canDeliver = current == 7;
-
-  return Row(
-    children: [
-      Expanded(
-        child: StatusUpdateButton(
-          icon: Icons.shopping_bag_outlined,
-          label: 'Picked Up',
-          isActive: current >= 6,
-          isCompleted: current > 6,
-          onPressed: canPickUp ? () => _updateStatus(6) : null,
+    return Row(
+      children: [
+        Expanded(
+          child: StatusUpdateButton(
+            icon: Icons.shopping_bag_outlined,
+            label: tr.t('picked_up'),
+            isActive: current >= 6,
+            isCompleted: current > 6,
+            onPressed: canPickUp ? () => _updateStatus(6) : null,
+          ),
         ),
-      ),
-      const SizedBox(width: 8),
-      
-      Expanded(
-        child: StatusUpdateButton(
-          icon: Icons.directions_car_outlined,
-          label: 'On The Way',
-          isActive: current >= 7,
-          isCompleted: current > 7,
-          onPressed: canOnTheWay ? () => _updateStatus(7) : null,
+        const SizedBox(width: 8),
+        
+        Expanded(
+          child: StatusUpdateButton(
+            icon: Icons.directions_car_outlined,
+            label: tr.t('on_the_way'),
+            isActive: current >= 7,
+            isCompleted: current > 7,
+            onPressed: canOnTheWay ? () => _updateStatus(7) : null,
+          ),
         ),
-      ),
-      const SizedBox(width: 8),
-      
-      Expanded(
-        child: StatusUpdateButton(
-          icon: Icons.check_circle_outline,
-          label: 'Delivered',
-          isActive: current >= 8,
-          isCompleted: current >= 8,
-          onPressed: canDeliver ? () => _updateStatus(8) : null,
-          isPrimary: true,
+        const SizedBox(width: 8),
+        
+        Expanded(
+          child: StatusUpdateButton(
+            icon: Icons.check_circle_outline,
+            label: tr.t('delivered'),
+            isActive: current >= 8,
+            isCompleted: current >= 8,
+            onPressed: canDeliver ? () => _updateStatus(8) : null,
+            isPrimary: true,
+          ),
         ),
-      ),
-    ],
-  );
-}
-
-Future<void> _updateStatus(int newStatus) async {
-  if (newStatus == _currentStatus) {
-    print('⚠️ Status is already $newStatus, ignoring...');
-    return;
-  }
-  
-  if (newStatus < _currentStatus) {
-    print('⚠️ Cannot go backwards from $_currentStatus to $newStatus');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('❌ Cannot go backwards in status'),
-        backgroundColor: AppColors.error,
-      ),
+      ],
     );
-    return;
   }
 
-  if (newStatus == 6 && _currentStatus != 5) {
-    print('⚠️ Can only go to Picked Up (6) from Driver Assigned (5)');
-    return;
-  }
-  if (newStatus == 7 && _currentStatus != 6) {
-    print('⚠️ Can only go to On The Way (7) from Picked Up (6)');
-    return;
-  }
-  if (newStatus == 8 && _currentStatus != 7) {
-    print('⚠️ Can only go to Delivered (8) from On The Way (7)');
-    return;
-  }
-
-  try {
-    final orderId = _deliveryData!['order']['order_id'];
-    final driverService = ref.read(driverServiceProvider);
+  Future<void> _updateStatus(int newStatus) async {
+    final tr = context.tr;
     
-    print('📨 Updating status to: $newStatus for order: $orderId');
+    if (newStatus == _currentStatus) {
+      print('⚠️ Status is already $newStatus, ignoring...');
+      return;
+    }
     
-    final position = await _locationService.getCurrentLocation();
-    
-    final response = await driverService.updateOrderStatus(
-      orderId: orderId,
-      statusId: newStatus,
-      latitude: position?.latitude,
-      longitude: position?.longitude,
-    );
-    
-    print('✅ Update status response: $response');
-    
-    if (response['success']) {
-      setState(() {
-        _currentStatus = newStatus;
-      });
-      
+    if (newStatus < _currentStatus) {
+      print('⚠️ Cannot go backwards from $_currentStatus to $newStatus');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ ${response['message']}'),
-          backgroundColor: AppColors.success,
+          content: Text('❌ ${tr.t('cannot_go_backwards')}'),
+          backgroundColor: AppColors.error,
         ),
       );
-      
-      if (newStatus == 8) {
-        Future.delayed(const Duration(seconds: 2), () {
-          Navigator.pop(context);
-        });
-      }
+      return;
     }
-  } catch (e) {
-    print('❌ Failed to update status: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('❌ Failed to update status: ${e.toString()}'),
-        backgroundColor: AppColors.error,
-      ),
-    );
+
+    if (newStatus == 6 && _currentStatus != 5) {
+      print('⚠️ Can only go to Picked Up (6) from Driver Assigned (5)');
+      return;
+    }
+    if (newStatus == 7 && _currentStatus != 6) {
+      print('⚠️ Can only go to On The Way (7) from Picked Up (6)');
+      return;
+    }
+    if (newStatus == 8 && _currentStatus != 7) {
+      print('⚠️ Can only go to Delivered (8) from On The Way (7)');
+      return;
+    }
+
+    try {
+      final orderId = _deliveryData!['order']['order_id'];
+      final driverService = ref.read(driverServiceProvider);
+      
+      print('📨 Updating status to: $newStatus for order: $orderId');
+      
+      final position = await _locationService.getCurrentLocation();
+      
+      final response = await driverService.updateOrderStatus(
+        orderId: orderId,
+        statusId: newStatus,
+        latitude: position?.latitude,
+        longitude: position?.longitude,
+      );
+      
+      print('✅ Update status response: $response');
+      
+      if (response['success']) {
+        setState(() {
+          _currentStatus = newStatus;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ ${response['message']}'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        
+        if (newStatus == 8) {
+          Future.delayed(const Duration(seconds: 2), () {
+            Navigator.pop(context);
+          });
+        }
+      }
+    } catch (e) {
+      print('❌ Failed to update status: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ ${tr.t('failed_to_update_status')}: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
-}
+
+  String _getStatusText(AppLocalizations tr, int status) {
+    switch (status) {
+      case 5: return tr.t('status_assigned');
+      case 6: return tr.t('picked_up');
+      case 7: return tr.t('on_the_way');
+      case 8: return tr.t('delivered');
+      default: return tr.t('status_unknown');
+    }
+  }
 
   Color _getStatusColor(int status) {
     switch (status) {

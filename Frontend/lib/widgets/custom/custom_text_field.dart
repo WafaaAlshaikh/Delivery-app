@@ -1,6 +1,7 @@
 // lib/widgets/custom/custom_text_field.dart
 import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
+import '../../core/localization/app_localizations.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController? controller;
@@ -32,6 +33,8 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
@@ -39,13 +42,20 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLines: maxLines,
       onChanged: onChanged,
-      style: const TextStyle(fontSize: 15, color: AppColors.ink900, fontWeight: FontWeight.w500),
+      style: const TextStyle(
+        fontSize: 15,
+        color: AppColors.ink900,
+        fontWeight: FontWeight.w500,
+      ),
       cursorColor: AppColors.primary,
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: tr.t(label), 
+        hintText: tr.t(hint),   
         prefixIcon: prefixIcon != null
-            ? IconTheme(data: const IconThemeData(color: AppColors.ink300, size: 20), child: prefixIcon!)
+            ? IconTheme(
+                data: const IconThemeData(color: AppColors.ink300, size: 20),
+                child: prefixIcon!,
+              )
             : null,
         suffixIcon: suffixIcon,
       ),

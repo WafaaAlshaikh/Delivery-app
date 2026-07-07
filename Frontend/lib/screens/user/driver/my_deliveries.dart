@@ -1,20 +1,24 @@
 // lib/screens/driver/my_deliveries.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 
-class MyDeliveries extends StatelessWidget {
+class MyDeliveries extends ConsumerWidget {
   const MyDeliveries({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tr = context.tr;
+    
     final deliveries = [
       {
         'id': '001',
         'store': 'Pizza Palace',
         'customer': 'Ahmed Mohamed',
         'address': '123 Main St, Cairo',
-        'status': 'In Progress',
+        'status': 'in_progress',
         'statusColor': AppColors.primary,
         'statusBgColor': AppColors.primarySoft,
       },
@@ -23,7 +27,7 @@ class MyDeliveries extends StatelessWidget {
         'store': 'Burger House',
         'customer': 'Sara Ali',
         'address': '45 Nile St, Cairo',
-        'status': 'Completed',
+        'status': 'completed',
         'statusColor': AppColors.success,
         'statusBgColor': AppColors.successSoft,
       },
@@ -32,7 +36,7 @@ class MyDeliveries extends StatelessWidget {
         'store': 'Sushi King',
         'customer': 'Mohammed Hassan',
         'address': '78 Zamalek, Cairo',
-        'status': 'In Progress',
+        'status': 'in_progress',
         'statusColor': AppColors.primary,
         'statusBgColor': AppColors.primarySoft,
       },
@@ -44,11 +48,14 @@ class MyDeliveries extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Deliveries',
+            tr.t('my_deliveries'),
             style: AppTypography.display(18, weight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          ...deliveries.map((delivery) => _DeliveryCard(delivery: delivery)),
+          ...deliveries.map((delivery) => _DeliveryCard(
+                delivery: delivery,
+                tr: tr,
+              )),
         ],
       ),
     );
@@ -57,11 +64,34 @@ class MyDeliveries extends StatelessWidget {
 
 class _DeliveryCard extends StatelessWidget {
   final Map<String, dynamic> delivery;
+  final AppLocalizations tr;
 
-  const _DeliveryCard({required this.delivery});
+  const _DeliveryCard({
+    required this.delivery,
+    required this.tr,
+  });
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'in_progress':
+        return tr.t('status_in_progress');
+      case 'completed':
+        return tr.t('status_completed');
+      case 'pending':
+        return tr.t('status_pending');
+      case 'cancelled':
+        return tr.t('status_cancelled');
+      default:
+        return status;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final status = delivery['status'] ?? 'pending';
+    final statusText = _getStatusText(status);
+    final isInProgress = status == 'in_progress';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -77,7 +107,7 @@ class _DeliveryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Order #ORD-2024-${delivery['id']}',
+                '${tr.t('order')} #ORD-2024-${delivery['id']}',
                 style: AppTypography.body(14, weight: FontWeight.w600),
               ),
               Container(
@@ -87,7 +117,7 @@ class _DeliveryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  delivery['status'],
+                  statusText,
                   style: AppTypography.body(
                     11,
                     weight: FontWeight.w600,
@@ -99,11 +129,11 @@ class _DeliveryCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Pickup: ${delivery['store']}',
+            '${tr.t('pickup')}: ${delivery['store']}',
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
           Text(
-            'Delivery: ${delivery['customer']}',
+            '${tr.t('delivery_to')}: ${delivery['customer']}',
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
           Text(
@@ -111,15 +141,15 @@ class _DeliveryCard extends StatelessWidget {
             style: AppTypography.body(12, color: AppColors.ink500),
           ),
           const SizedBox(height: 8),
-          if (delivery['status'] == 'In Progress')
+          if (isInProgress)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () {
                   // TODO: تحديث حالة التوصيل
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Order marked as delivered!'),
+                    SnackBar(
+                      content: Text('✅ ${tr.t('order_marked_delivered')}'),
                       backgroundColor: AppColors.success,
                     ),
                   );
@@ -130,7 +160,7 @@ class _DeliveryCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Mark as Delivered'),
+                child: Text(tr.t('mark_as_delivered')),
               ),
             ),
         ],

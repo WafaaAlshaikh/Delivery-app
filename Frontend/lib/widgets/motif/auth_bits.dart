@@ -1,8 +1,8 @@
 // lib/widgets/motif/auth_bits.dart
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
-
 
 class AuthHeader extends StatelessWidget {
   final IconData icon;
@@ -20,6 +20,8 @@ class AuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -34,17 +36,23 @@ class AuthHeader extends StatelessWidget {
           child: Icon(icon, color: AppColors.primary, size: 26),
         ),
         const SizedBox(height: 20),
-        Text(title, style: AppTypography.display(26, weight: FontWeight.w800)),
+        Text(
+          tr.t(title), 
+          style: AppTypography.display(26, weight: FontWeight.w800),
+        ),
         const SizedBox(height: 6),
         RichText(
           text: TextSpan(
             style: AppTypography.body(14.5, color: AppColors.ink500),
             children: [
-              TextSpan(text: subtitle),
+              TextSpan(text: tr.t(subtitle)), 
               if (highlight != null)
                 TextSpan(
-                  text: highlight,
-                  style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                  text: tr.t(highlight!), 
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
             ],
           ),
@@ -54,7 +62,6 @@ class AuthHeader extends StatelessWidget {
   }
 }
 
-
 class AuthErrorBanner extends StatelessWidget {
   final String message;
 
@@ -62,6 +69,8 @@ class AuthErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -77,7 +86,7 @@ class AuthErrorBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              message,
+              tr.t(message), 
               style: AppTypography.body(13.5, color: AppColors.error, height: 1.4),
             ),
           ),
@@ -101,15 +110,24 @@ class AuthFooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(question, style: AppTypography.body(14, color: AppColors.ink500)),
+        Text(
+          tr.t(question), 
+          style: AppTypography.body(14, color: AppColors.ink500),
+        ),
         TextButton(
           onPressed: onPressed,
           child: Text(
-            actionText,
-            style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 14),
+            tr.t(actionText), 
+            style: const TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+            ),
           ),
         ),
       ],
@@ -121,9 +139,13 @@ class RoleOption {
   final String value;
   final IconData icon;
   final String label;
-  const RoleOption({required this.value, required this.icon, required this.label});
+  
+  const RoleOption({
+    required this.value,
+    required this.icon,
+    required this.label,
+  });
 }
-
 
 class RoleSelector extends StatelessWidget {
   final List<RoleOption> options;
@@ -139,6 +161,8 @@ class RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Row(
       children: options.map((role) {
         final isSelected = role.value == selected;
@@ -167,7 +191,7 @@ class RoleSelector extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      role.label,
+                      tr.t(role.label), 
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
@@ -187,16 +211,22 @@ class RoleSelector extends StatelessWidget {
 
 class LabeledDivider extends StatelessWidget {
   final String label;
+  
   const LabeledDivider({super.key, required this.label});
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Row(
       children: [
         const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text(label, style: AppTypography.body(12, color: AppColors.ink300)),
+          child: Text(
+            tr.t(label),
+            style: AppTypography.body(12, color: AppColors.ink300),
+          ),
         ),
         const Expanded(child: Divider()),
       ],

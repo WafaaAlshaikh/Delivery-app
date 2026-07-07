@@ -1,6 +1,7 @@
 // lib/widgets/custom/custom_button.dart
 import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
+import '../../core/localization/app_localizations.dart';
 
 enum CustomButtonVariant { filled, outlined, ghost }
 
@@ -30,18 +31,20 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return SizedBox(
       width: width,
       height: height,
       child: switch (variant) {
-        CustomButtonVariant.outlined => _buildOutlined(),
-        CustomButtonVariant.ghost => _buildGhost(),
-        CustomButtonVariant.filled => _buildFilled(),
+        CustomButtonVariant.outlined => _buildOutlined(tr),
+        CustomButtonVariant.ghost => _buildGhost(tr),
+        CustomButtonVariant.filled => _buildFilled(tr),
       },
     );
   }
 
-  Widget _buildFilled() {
+  Widget _buildFilled(AppLocalizations tr) {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
@@ -51,11 +54,11 @@ class CustomButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         elevation: 0,
       ),
-      child: _buildChild(fallbackColor: Colors.white),
+      child: _buildChild(tr, fallbackColor: Colors.white),
     );
   }
 
-  Widget _buildOutlined() {
+  Widget _buildOutlined(AppLocalizations tr) {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
@@ -63,11 +66,11 @@ class CustomButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         side: BorderSide(color: backgroundColor ?? AppColors.border, width: 1.4),
       ),
-      child: _buildChild(fallbackColor: AppColors.ink900),
+      child: _buildChild(tr, fallbackColor: AppColors.ink900),
     );
   }
 
-  Widget _buildGhost() {
+  Widget _buildGhost(AppLocalizations tr) {
     return TextButton(
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
@@ -75,11 +78,11 @@ class CustomButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         backgroundColor: AppColors.primarySoft,
       ),
-      child: _buildChild(fallbackColor: AppColors.primaryDark),
+      child: _buildChild(tr, fallbackColor: AppColors.primaryDark),
     );
   }
 
-  Widget _buildChild({required Color fallbackColor}) {
+  Widget _buildChild(AppLocalizations tr, {required Color fallbackColor}) {
     if (isLoading) {
       return SizedBox(
         height: 22,
@@ -100,16 +103,24 @@ class CustomButton extends StatelessWidget {
           Icon(icon, size: 19, color: resolvedColor),
           const SizedBox(width: 8),
           Text(
-            text,
-            style: TextStyle(color: resolvedColor, fontSize: 16, fontWeight: FontWeight.w600),
+            tr.t(text), 
+            style: TextStyle(
+              color: resolvedColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       );
     }
 
     return Text(
-      text,
-      style: TextStyle(color: resolvedColor, fontSize: 16, fontWeight: FontWeight.w600),
+      tr.t(text),
+      style: TextStyle(
+        color: resolvedColor,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 // lib/widgets/motif/route_motif.dart
-
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 
 class RouteMotif extends StatefulWidget {
@@ -133,7 +133,6 @@ class _RoutePainter extends CustomPainter {
   bool shouldRepaint(covariant _RoutePainter oldDelegate) => oldDelegate.progress != progress;
 }
 
-
 class BrandPanel extends StatelessWidget {
   final String eyebrow;
   final String headline;
@@ -141,13 +140,15 @@ class BrandPanel extends StatelessWidget {
 
   const BrandPanel({
     super.key,
-    this.eyebrow = 'FASTA DELIVERY',
+    this.eyebrow = 'FASTA DELIVERY', 
     required this.headline,
     required this.caption,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       decoration: const BoxDecoration(gradient: AppColors.duskGradient),
       child: Stack(
@@ -179,7 +180,7 @@ class BrandPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      eyebrow,
+                      tr.t(eyebrow), 
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -193,7 +194,7 @@ class BrandPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      headline,
+                      tr.t(headline), 
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 34,
@@ -206,7 +207,7 @@ class BrandPanel extends StatelessWidget {
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 340),
                       child: Text(
-                        caption,
+                        tr.t(caption), 
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 15,

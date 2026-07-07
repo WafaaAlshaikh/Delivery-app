@@ -1,5 +1,6 @@
 // lib/screens/user/driver/widgets/status_update_button.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -23,6 +24,7 @@ class StatusUpdateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final isDisabled = onPressed == null || isCompleted;
     final color = isCompleted 
         ? AppColors.success 
@@ -62,7 +64,7 @@ class StatusUpdateButton extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              isCompleted ? 'Done' : label,
+              isCompleted ? tr.t('done') : label,
               style: AppTypography.body(10, weight: FontWeight.w600),
               textAlign: TextAlign.center,
             ),

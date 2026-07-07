@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/user_model.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/typography.dart';
 import '../../providers/auth_provider.dart';
@@ -14,7 +15,7 @@ import '../user/driver/available_orders.dart';
 import '../user/driver/my_deliveries.dart';
 import '../user/driver/earnings.dart';
 import '../user/driver/driver_profile_screen.dart';
-import '../user/driver/driver_settings_screen.dart';
+import '../settings/driver_settings_screen.dart';
 import '../auth/login_screen.dart';
 import '../user/driver/current_delivery_screen.dart';
 
@@ -30,44 +31,19 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   final LocationService _locationService = LocationService();
   bool _isSidebarOpen = false;
 
-  final List<Widget> _pages = const [
-    _DriverHomeContent(),
-    AvailableOrders(),
-    MyDeliveries(),
-    Earnings(),
-    CurrentDeliveryScreen(),
-  ];
-
-  final List<Map<String, dynamic>> _sidebarItems = [
-    {'icon': Icons.dashboard_outlined, 'label': 'Dashboard', 'index': 0},
-    {
-      'icon': Icons.local_shipping_outlined,
-      'label': 'Available Orders',
-      'index': 1,
-    },
-    {
-      'icon': Icons.delivery_dining_outlined,
-      'label': 'My Deliveries',
-      'index': 2,
-    },
-    {'icon': Icons.monetization_on_outlined, 'label': 'Earnings', 'index': 3},
-    {
-      'icon': Icons.person_outline,
-      'label': 'Profile',
-      'index': 4,
-      'isProfile': true,
-    },
-    {
-      'icon': Icons.settings_outlined,
-      'label': 'Settings',
-      'index': 5,
-      'isSettings': true,
-    },
-  ];
+  late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+    _pages = [
+      const _DriverHomeContent(),
+      const AvailableOrders(),
+      const MyDeliveries(),
+      const Earnings(),
+      const CurrentDeliveryScreen(),
+    ];
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(driverProvider.notifier).loadDriverData();
       _updateLocation();
@@ -92,10 +68,14 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
   }
 
   void _navigateToPage(int index) {
+    final tr = context.tr;
+    
     if (index == 4) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const DriverProfileScreen()),
+        MaterialPageRoute(
+          builder: (context) => const DriverProfileScreen(),
+        ),
       ).then((_) {
         ref.read(driverProvider.notifier).loadDriverData();
       });
@@ -106,7 +86,9 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     if (index == 5) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const DriverSettingsScreen()),
+        MaterialPageRoute(
+          builder: (context) => const DriverSettingsScreen(),
+        ),
       );
       _closeSidebar();
       return;
@@ -138,15 +120,42 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final driverState = ref.watch(driverProvider);
     final authState = ref.watch(authProvider);
     final user = authState.user;
 
+    final sidebarItems = [
+      {'icon': Icons.dashboard_outlined, 'label': tr.t('dashboard'), 'index': 0},
+      {
+        'icon': Icons.local_shipping_outlined,
+        'label': tr.t('available_orders'),
+        'index': 1,
+      },
+      {
+        'icon': Icons.delivery_dining_outlined,
+        'label': tr.t('my_deliveries'),
+        'index': 2,
+      },
+      {'icon': Icons.monetization_on_outlined, 'label': tr.t('earnings'), 'index': 3},
+      {
+        'icon': Icons.person_outline,
+        'label': tr.t('profile'),
+        'index': 4,
+        'isProfile': true,
+      },
+      {
+        'icon': Icons.settings_outlined,
+        'label': tr.t('settings'),
+        'index': 5,
+        'isSettings': true,
+      },
+    ];
+
     return Scaffold(
       body: Stack(
         children: [
-          _buildMainContent(driverState),
-
+          _buildMainContent(tr, driverState, sidebarItems),
           if (_isSidebarOpen)
             GestureDetector(
               onTap: _closeSidebar,
@@ -156,27 +165,28 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 height: double.infinity,
               ),
             ),
-
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             left: _isSidebarOpen ? 0 : -280,
             top: 0,
             bottom: 0,
-            child: _buildSidebar(user),
+            child: _buildSidebar(tr, user, sidebarItems),
           ),
         ],
       ),
     );
   }
 
-
-
-  Widget _buildMainContent(DriverState driverState) {
+  Widget _buildMainContent(
+    AppLocalizations tr,
+    DriverState driverState,
+    List<Map<String, dynamic>> sidebarItems,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Delivery',
+          tr.t('delivery'),
           style: AppTypography.display(20, weight: FontWeight.w800),
         ),
         backgroundColor: Colors.transparent,
@@ -217,7 +227,9 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      driverState.isOnline ? 'Online' : 'Offline',
+                      driverState.isOnline
+                          ? tr.t('online')
+                          : tr.t('offline'),
                       style: AppTypography.body(
                         12,
                         weight: FontWeight.w600,
@@ -246,39 +258,42 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
             _currentIndex = index;
           });
         },
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            icon: const Icon(Icons.dashboard_outlined),
+            activeIcon: const Icon(Icons.dashboard),
+            label: tr.t('dashboard'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping_outlined),
-            activeIcon: Icon(Icons.local_shipping),
-            label: 'Available',
+            icon: const Icon(Icons.local_shipping_outlined),
+            activeIcon: const Icon(Icons.local_shipping),
+            label: tr.t('available_orders'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.delivery_dining_outlined),
-            activeIcon: Icon(Icons.delivery_dining),
-            label: 'My Orders',
+            icon: const Icon(Icons.delivery_dining_outlined),
+            activeIcon: const Icon(Icons.delivery_dining),
+            label: tr.t('my_deliveries'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.monetization_on_outlined),
-            activeIcon: Icon(Icons.monetization_on),
-            label: 'Earnings',
+            icon: const Icon(Icons.monetization_on_outlined),
+            activeIcon: const Icon(Icons.monetization_on),
+            label: tr.t('earnings'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.navigation_outlined),
-            activeIcon: Icon(Icons.navigation),
-            label: 'Delivery',
+            icon: const Icon(Icons.navigation_outlined),
+            activeIcon: const Icon(Icons.navigation),
+            label: tr.t('delivery'),
           ),
         ],
       ),
     );
   }
 
-
-  Widget _buildSidebar(UserModel? user) {
+  Widget _buildSidebar(
+    AppLocalizations tr,
+    UserModel? user,
+    List<Map<String, dynamic>> sidebarItems,
+  ) {
     return Container(
       width: 280,
       decoration: const BoxDecoration(
@@ -372,8 +387,8 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                         const SizedBox(width: 6),
                         Text(
                           ref.watch(driverProvider).isOnline
-                              ? 'Online'
-                              : 'Offline',
+                              ? tr.t('online')
+                              : tr.t('offline'),
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -386,15 +401,13 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 ],
               ),
             ),
-
             const Divider(color: Colors.white24, height: 1),
-
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _sidebarItems.length,
+                itemCount: sidebarItems.length,
                 itemBuilder: (context, index) {
-                  final item = _sidebarItems[index];
+                  final item = sidebarItems[index];
                   final isSelected =
                       _currentIndex == item['index'] &&
                       !(item['isProfile'] == true ||
@@ -409,17 +422,15 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                 },
               ),
             ),
-
             const Divider(color: Colors.white24, height: 1),
-
             Padding(
               padding: const EdgeInsets.all(16),
               child: _SidebarItem(
                 icon: Icons.logout_rounded,
-                label: 'Logout',
+                label: tr.t('logout'),
                 isSelected: false,
                 isDestructive: true,
-                onTap: () => _showLogoutDialog(),
+                onTap: () => _showLogoutDialog(tr),
               ),
             ),
           ],
@@ -428,17 +439,17 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     );
   }
 
-  void _showLogoutDialog() {
+  void _showLogoutDialog(AppLocalizations tr) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(tr.t('logout')),
+        content: Text(tr.t('logout_confirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(tr.t('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -446,7 +457,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
               _logout();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Logout'),
+            child: Text(tr.t('logout')),
           ),
         ],
       ),
@@ -522,7 +533,6 @@ class _SidebarItem extends StatelessWidget {
 }
 
 
-
 class _DriverHomeContent extends ConsumerWidget {
   const _DriverHomeContent();
 
@@ -554,6 +564,7 @@ class _DriverHomeContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tr = context.tr;
     final driverState = ref.watch(driverProvider);
     final authState = ref.watch(authProvider);
     final user = authState.user;
@@ -579,7 +590,7 @@ class _DriverHomeContent extends ConsumerWidget {
               onPressed: () {
                 ref.read(driverProvider.notifier).loadDriverData();
               },
-              child: const Text('Retry'),
+              child: Text(tr.t('retry')),
             ),
           ],
         ),
@@ -599,13 +610,13 @@ class _DriverHomeContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWelcomeCard(context, driverState, user),
+            _buildWelcomeCard(tr, driverState, user),
             const SizedBox(height: 24),
             _buildMapSection(context, driverState, ref),
             const SizedBox(height: 24),
-            _buildStatsSection(stats),
+            _buildStatsSection(tr, stats),
             const SizedBox(height: 24),
-            if (driverState.isOnline) _buildUpdateLocationButton(context, ref),
+            if (driverState.isOnline) _buildUpdateLocationButton(context, ref, tr),
             const SizedBox(height: 20),
           ],
         ),
@@ -614,10 +625,13 @@ class _DriverHomeContent extends ConsumerWidget {
   }
 
   Widget _buildWelcomeCard(
-    BuildContext context,
+    AppLocalizations tr,
     DriverState driverState,
     UserModel? user,
   ) {
+    final firstName = user?.fullName?.split(' ').first ?? 'Driver';
+    final helloText = tr.t('hello_driver').replaceAll('{name}', firstName);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -667,7 +681,7 @@ class _DriverHomeContent extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hello, ${user?.fullName?.split(' ').first ?? 'Driver'}! 👋',
+                  helloText,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -676,7 +690,7 @@ class _DriverHomeContent extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Status: ${driverState.profile?['status'] ?? 'Pending'}',
+                  '${tr.t('status')}: ${driverState.profile?['status'] ?? tr.t('pending')}',
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 4),
@@ -709,7 +723,9 @@ class _DriverHomeContent extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        driverState.isOnline ? 'ONLINE' : 'OFFLINE',
+                        driverState.isOnline
+                            ? tr.t('online').toUpperCase()
+                            : tr.t('offline').toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -772,18 +788,21 @@ class _DriverHomeContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsSection(Map<String, dynamic> stats) {
+  Widget _buildStatsSection(AppLocalizations tr, Map<String, dynamic> stats) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(
-              'Your Stats',
+              tr.t('your_stats'),
               style: AppTypography.display(18, weight: FontWeight.w700),
             ),
             const Spacer(),
-            TextButton(onPressed: () {}, child: const Text('View All')),
+            TextButton(
+              onPressed: () {},
+              child: Text(tr.t('view_all')),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -796,25 +815,25 @@ class _DriverHomeContent extends ConsumerWidget {
           childAspectRatio: 1.2,
           children: [
             DriverStatCard(
-              title: 'Total Deliveries',
+              title: tr.t('total_deliveries'),
               value: _formatNumber(stats['total_deliveries']),
               icon: Icons.delivery_dining,
               color: AppColors.primary,
             ),
             DriverStatCard(
-              title: 'Total Earnings',
+              title: tr.t('total_earnings'),
               value: '\$${_formatNumber(stats['total_earnings'], decimals: 2)}',
               icon: Icons.attach_money,
               color: AppColors.success,
             ),
             DriverStatCard(
-              title: 'Rating',
+              title: tr.t('rating'),
               value: '${_formatNumber(stats['rating'], decimals: 1)} ⭐',
               icon: Icons.star,
               color: AppColors.gold,
             ),
             DriverStatCard(
-              title: 'Current Orders',
+              title: tr.t('current_orders'),
               value: _formatNumber(stats['current_orders']),
               icon: Icons.hourglass_top,
               color: AppColors.accent,
@@ -825,7 +844,11 @@ class _DriverHomeContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildUpdateLocationButton(BuildContext context, WidgetRef ref) {
+  Widget _buildUpdateLocationButton(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations tr,
+  ) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -842,8 +865,8 @@ class _DriverHomeContent extends ConsumerWidget {
                   );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('📍 Location updated successfully!'),
+                  SnackBar(
+                    content: Text(tr.t('location_updated')),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -852,8 +875,8 @@ class _DriverHomeContent extends ConsumerWidget {
           } catch (e) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('❌ Failed to update location'),
+                SnackBar(
+                  content: Text(tr.t('location_update_failed')),
                   backgroundColor: AppColors.error,
                 ),
               );
@@ -861,7 +884,7 @@ class _DriverHomeContent extends ConsumerWidget {
           }
         },
         icon: const Icon(Icons.my_location),
-        label: const Text('Update Location'),
+        label: Text(tr.t('update_location')),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(

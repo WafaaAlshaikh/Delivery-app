@@ -1,5 +1,6 @@
 // lib/widgets/driver/driver_stat_card.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -19,6 +20,8 @@ class DriverStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -51,7 +54,7 @@ class DriverStatCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            title,
+            tr.t(title), 
             style: AppTypography.body(12, color: AppColors.ink500),
             overflow: TextOverflow.ellipsis,
           ),

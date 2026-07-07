@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter_web/google_maps_flutter_web.dart'
     if (dart.library.html) 'package:google_maps_flutter_web/google_maps_flutter_web.dart'
     as google_maps_web;
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 
 class DriverLocationMap extends StatefulWidget {
@@ -31,11 +32,17 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
   GoogleMapController? _mapController;
   LatLng? _currentPosition;
   final Set<Marker> _markers = {};
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _updatePosition();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _isInitialized = true;
+      });
+    });
   }
 
   @override
@@ -82,8 +89,43 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
     );
   }
 
+  void _updateMarkerWithTranslation(BuildContext context) {
+    if (_currentPosition == null) return;
+    final tr = context.tr;
+
+    _markers.clear();
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('driver_location'),
+        position: _currentPosition!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          widget.isOnline ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueRed,
+        ),
+        infoWindow: InfoWindow(
+          title: tr.t('your_location'),
+          snippet: tr.t('drag_to_update'),
+        ),
+        draggable: widget.interactive,
+        onDragEnd: (newPosition) {
+          setState(() {
+            _currentPosition = newPosition;
+            if (widget.onLocationChanged != null) {
+              widget.onLocationChanged!(newPosition);
+            }
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
+    if (_isInitialized && _currentPosition != null) {
+      _updateMarkerWithTranslation(context);
+    }
+
     if (_currentPosition == null) {
       return Container(
         height: 300,
@@ -91,13 +133,13 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-              Text('Loading location...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(tr.t('loading_location')),
             ],
           ),
         ),
@@ -181,7 +223,9 @@ class _DriverLocationMapState extends State<DriverLocationMap> {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    widget.isOnline ? 'ONLINE' : 'OFFLINE',
+                    widget.isOnline 
+                        ? tr.t('online').toUpperCase() 
+                        : tr.t('offline').toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -232,6 +276,8 @@ class DriverLocationMapWeb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     if (latitude == null || longitude == null) {
       return Container(
         height: 300,
@@ -239,21 +285,18 @@ class DriverLocationMapWeb extends StatelessWidget {
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
+        child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-              Text('Loading location...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(tr.t('loading_location')),
             ],
           ),
         ),
       );
     }
-
-    final String embedUrl =
-        'https://www.google.com/maps/embed/v1/place?key=YOUR_GOOGLE_MAPS_API_KEY&q=${latitude},${longitude}&zoom=15';
 
     return Container(
       height: 300,
@@ -264,9 +307,6 @@ class DriverLocationMapWeb extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          HtmlElementView(
-            viewType: 'google-maps-iframe',
-          ),
           Image.network(
             'https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x300&markers=color:${isOnline ? 'green' : 'red'}%7C${latitude},${longitude}&key=AIzaSyAEGm-gX39A5x7DA9a0qSg6mEbYNmqAPPk&libraries',
             fit: BoxFit.cover,
@@ -275,8 +315,8 @@ class DriverLocationMapWeb extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) {
               return Container(
                 color: Colors.grey.shade100,
-                child: const Center(
-                  child: Text('Unable to load map'),
+                child: Center(
+                  child: Text(tr.t('unable_to_load_map')),
                 ),
               );
             },
@@ -305,7 +345,9 @@ class DriverLocationMapWeb extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    isOnline ? 'ONLINE' : 'OFFLINE',
+                    isOnline 
+                        ? tr.t('online').toUpperCase() 
+                        : tr.t('offline').toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,

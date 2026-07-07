@@ -1,6 +1,7 @@
 // lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import 'customer_home.dart';
@@ -49,6 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             });
             
             if (_driverStatus == 'Active') {
+              // Driver is active, will show dashboard
             }
           }
         } catch (e) {
@@ -82,6 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final authState = ref.watch(authProvider);
     final user = authState.user;
 
@@ -106,14 +109,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     if (_isChecking) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Checking your account status...'),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(tr.t('checking_account_status')), 
             ],
           ),
         ),
@@ -128,10 +131,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              const Text('Something went wrong'),
+              Text(tr.t('something_went_wrong')), 
               const SizedBox(height: 8),
               Text(
-                'Please try again',
+                tr.t('please_try_again'), 
                 style: TextStyle(color: Colors.grey[600]),
               ),
               const SizedBox(height: 24),
@@ -143,7 +146,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   });
                   _checkDriverStatus();
                 },
-                child: const Text('Retry'),
+                child: Text(tr.t('retry')),
               ),
             ],
           ),

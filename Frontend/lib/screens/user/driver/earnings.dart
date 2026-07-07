@@ -1,6 +1,7 @@
 // lib/screens/driver/earnings.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/driver_provider.dart';
@@ -10,6 +11,7 @@ class Earnings extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tr = context.tr;
     final driverState = ref.watch(driverProvider);
     final stats = driverState.stats ?? {};
 
@@ -25,76 +27,90 @@ class Earnings extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: AppColors.routeGradient,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.25),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Text(
-                  'Total Earnings',
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '\$${(stats['total_earnings'] ?? 0.0).toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _EarningStat(
-                      label: 'Deliveries',
-                      value: '${stats['total_deliveries'] ?? 0}',
-                    ),
-                    _EarningStat(
-                      label: 'Rating',
-                      value: '${stats['rating']?.toStringAsFixed(1) ?? '0.0'} ⭐',
-                    ),
-                  ],
-                ),
-              ],
+          _buildEarningsCard(tr, stats),
+          const SizedBox(height: 24),
+          _buildTransactionsSection(tr, transactions),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEarningsCard(AppLocalizations tr, Map<String, dynamic> stats) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: AppColors.routeGradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            tr.t('total_earnings'),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '\$${(stats['total_earnings'] ?? 0.0).toStringAsFixed(2)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 24),
-
+          const SizedBox(height: 8),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Text(
-                'Recent Transactions',
-                style: AppTypography.display(18, weight: FontWeight.w700),
+              _EarningStat(
+                label: tr.t('total_deliveries'),
+                value: '${stats['total_deliveries'] ?? 0}',
               ),
-              const Spacer(),
-              TextButton(
-                onPressed: () {},
-                child: const Text('View All'),
+              _EarningStat(
+                label: tr.t('rating'),
+                value: '${stats['rating']?.toStringAsFixed(1) ?? '0.0'} ⭐',
               ),
             ],
           ),
-          const SizedBox(height: 12),
-
-          ...transactions.map((transaction) => _TransactionCard(
-                order: transaction['order']!,
-                date: transaction['date']!,
-                amount: transaction['amount']!,
-              )),
         ],
       ),
+    );
+  }
+
+  Widget _buildTransactionsSection(
+    AppLocalizations tr,
+    List<Map<String, String>> transactions,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              tr.t('recent_transactions'),
+              style: AppTypography.display(18, weight: FontWeight.w700),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () {},
+              child: Text(tr.t('view_all')),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ...transactions.map((transaction) => _TransactionCard(
+              order: transaction['order']!,
+              date: transaction['date']!,
+              amount: transaction['amount']!,
+            )),
+      ],
     );
   }
 }
@@ -109,7 +125,10 @@ class _EarningStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
         const SizedBox(height: 4),
         Text(
           value,
@@ -137,6 +156,8 @@ class _TransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
@@ -167,7 +188,7 @@ class _TransactionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Order #ORD-2024-$order',
+                    '${tr.t('order')} #ORD-2024-$order',
                     style: AppTypography.body(14, weight: FontWeight.w600),
                   ),
                   Text(

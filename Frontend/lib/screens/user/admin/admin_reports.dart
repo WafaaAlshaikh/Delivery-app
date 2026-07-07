@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/admin_provider.dart';
@@ -11,6 +12,7 @@ class AdminReports extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tr = context.tr;
     final dashboardAsync = ref.watch(adminDashboardProvider);
 
     return Scaffold(
@@ -21,10 +23,13 @@ class AdminReports extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Reports & Insights', style: AppTypography.display(18, weight: FontWeight.w700)),
+              Text(
+                tr.t('reports_and_insights'),
+                style: AppTypography.display(18, weight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
               Text(
-                'A quick pulse on how the platform is performing',
+                tr.t('reports_subtitle'),
                 style: AppTypography.body(13, color: AppColors.ink500),
               ),
               const SizedBox(height: 20),
@@ -38,7 +43,10 @@ class AdminReports extends ConsumerWidget {
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
-          child: Text('Error: $error', style: const TextStyle(color: AppColors.error)),
+          child: Text(
+            '${tr.t('error')}: $error',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -47,10 +55,12 @@ class AdminReports extends ConsumerWidget {
 
 class _UserBreakdownCard extends StatelessWidget {
   final Map<String, dynamic> data;
+
   const _UserBreakdownCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final users = data['users'] ?? {};
     final total = (users['total'] ?? 0).toDouble();
     final merchants = (users['merchants'] ?? 0).toDouble();
@@ -58,9 +68,9 @@ class _UserBreakdownCard extends StatelessWidget {
     final customers = (total - merchants - drivers).clamp(0, double.infinity);
 
     final rows = [
-      ('Customers', customers, AppColors.roleCustomer),
-      ('Merchants', merchants, AppColors.roleMerchant),
-      ('Drivers', drivers, AppColors.roleDriver),
+      (tr.t('customers'), customers, AppColors.roleCustomer),
+      (tr.t('merchants'), merchants, AppColors.roleMerchant),
+      (tr.t('drivers'), drivers, AppColors.roleDriver),
     ];
 
     return Container(
@@ -73,10 +83,18 @@ class _UserBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('User Base Breakdown', style: AppTypography.display(15, weight: FontWeight.w700)),
+          Text(
+            tr.t('user_base_breakdown'),
+            style: AppTypography.display(15, weight: FontWeight.w700),
+          ),
           const SizedBox(height: 18),
           for (final row in rows) ...[
-            _BarRow(label: row.$1, value: row.$2, total: total <= 0 ? 1 : total, color: row.$3),
+            _BarRow(
+              label: row.$1,
+              value: row.$2,
+              total: total <= 0 ? 1 : total,
+              color: row.$3,
+            ),
             const SizedBox(height: 12),
           ],
         ],
@@ -91,7 +109,12 @@ class _BarRow extends StatelessWidget {
   final double total;
   final Color color;
 
-  const _BarRow({required this.label, required this.value, required this.total, required this.color});
+  const _BarRow({
+    required this.label,
+    required this.value,
+    required this.total,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +125,14 @@ class _BarRow extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: AppTypography.body(12, weight: FontWeight.w600, color: AppColors.ink700)),
-            Text(value.toInt().toString(), style: AppTypography.body(12, weight: FontWeight.w700)),
+            Text(
+              label,
+              style: AppTypography.body(12, weight: FontWeight.w600, color: AppColors.ink700),
+            ),
+            Text(
+              value.toInt().toString(),
+              style: AppTypography.body(12, weight: FontWeight.w700),
+            ),
           ],
         ),
         const SizedBox(height: 6),
@@ -123,19 +152,21 @@ class _BarRow extends StatelessWidget {
 
 class _OrdersBarChartCard extends StatelessWidget {
   final Map<String, dynamic> data;
+
   const _OrdersBarChartCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final orders = data['orders'] ?? {};
     final total = (orders['total'] ?? 0).toDouble();
     final active = (orders['active'] ?? 0).toDouble();
     final completed = (total - active).clamp(0, double.infinity);
 
     final bars = [
-      ('Active', active, AppColors.primary),
-      ('Completed', completed, AppColors.success),
-      ('Total', total, AppColors.accent),
+      (tr.t('active'), active, AppColors.primary),
+      (tr.t('completed'), completed, AppColors.success),
+      (tr.t('total'), total, AppColors.accent),
     ];
     final maxY = (total <= 0 ? 1 : total) * 1.25;
 
@@ -149,7 +180,10 @@ class _OrdersBarChartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Orders Snapshot', style: AppTypography.display(15, weight: FontWeight.w700)),
+          Text(
+            tr.t('orders_snapshot'),
+            style: AppTypography.display(15, weight: FontWeight.w700),
+          ),
           const SizedBox(height: 18),
           SizedBox(
             height: 180,
@@ -159,22 +193,36 @@ class _OrdersBarChartCard extends StatelessWidget {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 1),
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: AppColors.border,
+                    strokeWidth: 1,
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
                         final i = value.toInt();
-                        if (i < 0 || i >= bars.length) return const SizedBox.shrink();
+                        if (i < 0 || i >= bars.length) {
+                          return const SizedBox.shrink();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: Text(bars[i].$1, style: AppTypography.body(11, color: AppColors.ink500)),
+                          child: Text(
+                            bars[i].$1,
+                            style: AppTypography.body(11, color: AppColors.ink500),
+                          ),
                         );
                       },
                     ),
@@ -208,6 +256,8 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -217,14 +267,20 @@ class _NoteCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: AppColors.accentDark, size: 18),
+          const Icon(
+            Icons.info_outline,
+            color: AppColors.accentDark,
+            size: 18,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'These charts are built from the same dashboard data. For deeper reports '
-              '(revenue by day, top merchants, driver performance) expose dedicated '
-              'endpoints and wire them into adminReportsProvider.',
-              style: AppTypography.body(12, color: AppColors.accentDark, weight: FontWeight.w500),
+              tr.t('reports_note'),
+              style: AppTypography.body(
+                12,
+                color: AppColors.accentDark,
+                weight: FontWeight.w500,
+              ),
             ),
           ),
         ],

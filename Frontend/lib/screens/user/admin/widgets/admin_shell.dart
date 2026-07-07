@@ -1,5 +1,6 @@
 // lib/screens/user/admin/widgets/admin_shell.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -49,6 +50,8 @@ class AdminShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= _wideBreakpoint;
@@ -125,7 +128,7 @@ class AdminShell extends StatelessWidget {
                     (e) => NavigationDestination(
                       icon: Icon(e.icon, color: AppColors.ink500),
                       selectedIcon: Icon(e.activeIcon, color: AppColors.primary),
-                      label: e.label,
+                      label: tr.t(e.label), 
                     ),
                   )
                   .toList(),
@@ -136,6 +139,7 @@ class AdminShell extends StatelessWidget {
     );
   }
 }
+
 
 class _Sidebar extends StatelessWidget {
   final List<AdminNavItem> items;
@@ -150,6 +154,8 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       width: 240,
       decoration: const BoxDecoration(gradient: AppColors.duskGradient),
@@ -172,7 +178,7 @@ class _Sidebar extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Admin',
+                    tr.t('admin'),
                     style: AppTypography.display(18, weight: FontWeight.w800, color: Colors.white),
                   ),
                 ],
@@ -212,7 +218,7 @@ class _Sidebar extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                item.label,
+                                tr.t(item.label),
                                 style: AppTypography.body(
                                   14,
                                   weight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -246,7 +252,7 @@ class _Sidebar extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'Super Admin',
+                        tr.t('super_admin'),
                         style: AppTypography.body(12, weight: FontWeight.w600, color: Colors.white),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -285,6 +291,8 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
       decoration: BoxDecoration(
@@ -302,7 +310,7 @@ class _TopBar extends StatelessWidget {
                 child: TextField(
                   onChanged: onSearchChanged,
                   decoration: InputDecoration(
-                    hintText: 'Search something...',
+                    hintText: tr.t('search_hint'), 
                     hintStyle: AppTypography.body(13, color: AppColors.ink300),
                     prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.ink300),
                     filled: true,

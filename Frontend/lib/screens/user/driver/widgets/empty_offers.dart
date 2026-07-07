@@ -1,5 +1,6 @@
 // lib/screens/user/driver/widgets/empty_offers.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -8,6 +9,8 @@ class EmptyOffers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -19,13 +22,14 @@ class EmptyOffers extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No Offers Available',
+            tr.t('no_offers_available'),
             style: AppTypography.display(20, weight: FontWeight.w700, color: AppColors.ink500),
           ),
           const SizedBox(height: 8),
           Text(
-            'Stay online to receive delivery offers',
+            tr.t('stay_online_for_offers'),
             style: AppTypography.body(14, color: AppColors.ink300),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           Container(
@@ -44,7 +48,7 @@ class EmptyOffers extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'New offers will appear here instantly',
+                  tr.t('new_offers_appear_instantly'),
                   style: AppTypography.body(13, color: AppColors.primaryDark),
                 ),
               ],

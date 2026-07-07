@@ -1,9 +1,9 @@
 // lib/widgets/motif/auth_shell.dart
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 import '../../core/utils/responsive.dart';
 import 'route_motif.dart';
-
 
 class AuthShell extends StatelessWidget {
   final String brandHeadline;
@@ -19,6 +19,7 @@ class AuthShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final isWide = !Responsive.isMobile(context);
 
     if (!isWide) {
@@ -34,7 +35,10 @@ class AuthShell extends StatelessWidget {
         children: [
           Expanded(
             flex: 5,
-            child: BrandPanel(headline: brandHeadline, caption: brandCaption),
+            child: BrandPanel(
+              headline: tr.t(brandHeadline),
+              caption: tr.t(brandCaption),  
+            ),
           ),
           Expanded(
             flex: 6,

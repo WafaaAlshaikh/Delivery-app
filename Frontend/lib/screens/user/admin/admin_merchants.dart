@@ -1,6 +1,7 @@
 // lib/screens/admin/admin_merchants.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/admin_provider.dart';
@@ -10,6 +11,7 @@ class AdminMerchants extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tr = context.tr;
     final merchantsAsync = ref.watch(adminMerchantsProvider);
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= 900;
@@ -19,15 +21,28 @@ class AdminMerchants extends ConsumerWidget {
       appBar: isWide
           ? null
           : AppBar(
-              title: Text('Merchants', style: AppTypography.display(18, weight: FontWeight.w700)),
+              title: Text(
+                tr.t('merchants'),
+                style: AppTypography.display(18, weight: FontWeight.w700),
+              ),
               backgroundColor: Colors.transparent,
               elevation: 0,
-              actions: [IconButton(icon: const Icon(Icons.add), onPressed: () {})],
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {},
+                ),
+              ],
             ),
       body: merchantsAsync.when(
         data: (merchants) {
           if (merchants.isEmpty) {
-            return Center(child: Text('No merchants found', style: AppTypography.body(13, color: AppColors.ink500)));
+            return Center(
+              child: Text(
+                tr.t('no_merchants_found'),
+                style: AppTypography.body(13, color: AppColors.ink500),
+              ),
+            );
           }
 
           if (isWide) {
@@ -52,7 +67,10 @@ class AdminMerchants extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
-          child: Text('Error: $error', style: const TextStyle(color: AppColors.error)),
+          child: Text(
+            '${tr.t('error')}: $error',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ),
     );
@@ -66,6 +84,7 @@ class _MerchantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final business = merchant['business'] ?? {};
     final isActive = merchant['is_active'] ?? true;
 
@@ -77,7 +96,11 @@ class _MerchantCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: AppColors.ink900.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: AppColors.ink900.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -89,7 +112,12 @@ class _MerchantCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [AppColors.roleMerchant, AppColors.roleMerchant.withOpacity(0.7)]),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.roleMerchant,
+                      AppColors.roleMerchant.withOpacity(0.7),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.storefront, color: Colors.white),
@@ -99,8 +127,16 @@ class _MerchantCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(merchant['full_name'] ?? 'Unknown', style: AppTypography.body(14, weight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-                    Text(merchant['email'] ?? '', style: AppTypography.body(12, color: AppColors.ink500), overflow: TextOverflow.ellipsis),
+                    Text(
+                      merchant['full_name'] ?? 'Unknown',
+                      style: AppTypography.body(14, weight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      merchant['email'] ?? '',
+                      style: AppTypography.body(12, color: AppColors.ink500),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
@@ -111,8 +147,12 @@ class _MerchantCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  isActive ? 'Active' : 'Inactive',
-                  style: AppTypography.body(10, weight: FontWeight.w600, color: isActive ? AppColors.success : AppColors.error),
+                  isActive ? tr.t('active') : tr.t('inactive'),
+                  style: AppTypography.body(
+                    10,
+                    weight: FontWeight.w600,
+                    color: isActive ? AppColors.success : AppColors.error,
+                  ),
                 ),
               ),
             ],
@@ -121,15 +161,26 @@ class _MerchantCard extends StatelessWidget {
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(color: AppColors.accentSoft, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: AppColors.accentSoft,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.store_mall_directory_outlined, size: 14, color: AppColors.accentDark),
+                  const Icon(
+                    Icons.store_mall_directory_outlined,
+                    size: 14,
+                    color: AppColors.accentDark,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       business['name'],
-                      style: AppTypography.body(12, weight: FontWeight.w600, color: AppColors.accentDark),
+                      style: AppTypography.body(
+                        12,
+                        weight: FontWeight.w600,
+                        color: AppColors.accentDark,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

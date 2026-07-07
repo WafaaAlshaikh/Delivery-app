@@ -1,40 +1,38 @@
 // lib/screens/onboarding/onboarding_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
 import '../auth/login_screen.dart';
 import 'splash_screen.dart' show kOnboardingSeenKey;
 
 class _OnboardPage {
   final IconData icon;
-  final String title;
-  final String description;
+  final String titleKey;
+  final String descriptionKey;
 
   const _OnboardPage({
     required this.icon,
-    required this.title,
-    required this.description,
+    required this.titleKey,
+    required this.descriptionKey,
   });
 }
 
 const List<_OnboardPage> _pages = [
   _OnboardPage(
     icon: Icons.storefront_outlined,
-    title: 'كل شي بمكان واحد',
-    description:
-        'اطلب من مطاعمك المفضلة، صيدليات، محلات أثاث وأكتر، كل هذا من تطبيق واحد.',
+    titleKey: 'onboarding_title_1',
+    descriptionKey: 'onboarding_desc_1',
   ),
   _OnboardPage(
     icon: Icons.two_wheeler_outlined,
-    title: 'توصيل سريع وموثوق',
-    description:
-        'شبكة واسعة من السائقين وشركات التوصيل بتوصلك طلبك بأسرع وقت داخل وبرا المدينة.',
+    titleKey: 'onboarding_title_2',
+    descriptionKey: 'onboarding_desc_2',
   ),
   _OnboardPage(
     icon: Icons.handshake_outlined,
-    title: 'انضم كتاجر أو سائق',
-    description:
-        'عندك محل أو موتور أو شركة توصيل؟ سجّل معنا ووسّع شغلك بسهولة.',
+    titleKey: 'onboarding_title_3',
+    descriptionKey: 'onboarding_desc_3',
   ),
 ];
 
@@ -67,6 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final isLastPage = _currentPage == _pages.length - 1;
 
     return Scaffold(
@@ -80,7 +79,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: TextButton(
                   onPressed: _finishOnboarding,
                   child: Text(
-                    'تخطي',
+                    tr.t('skip'), 
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -114,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 40),
                         Text(
-                          page.title,
+                          tr.t(page.titleKey),
                           textAlign: TextAlign.center,
                           style: Theme.of(context)
                               .textTheme
@@ -123,7 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          page.description,
+                          tr.t(page.descriptionKey), 
                           textAlign: TextAlign.center,
                           style: Theme.of(context)
                               .textTheme
@@ -170,7 +169,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       );
                     }
                   },
-                  child: Text(isLastPage ? 'ابدأ الآن' : 'التالي'),
+                  child: Text(
+                    isLastPage 
+                        ? tr.t('get_started')  
+                        : tr.t('next'),       
+                  ),
                 ),
               ),
             ),

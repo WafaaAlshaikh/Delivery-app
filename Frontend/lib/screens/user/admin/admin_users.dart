@@ -1,6 +1,7 @@
 // lib/screens/admin/admin_users.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/admin_provider.dart';
@@ -17,10 +18,20 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
   String _searchQuery = '';
   int _currentPage = 1;
 
-  static const _roleFilters = [null, 'Customer', 'Merchant', 'Driver', 'Admin'];
-
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
+    final roleFilters = [
+      null,
+      tr.t('role_customer'),
+      tr.t('role_merchant'),
+      tr.t('role_driver'),
+      tr.t('role_admin'),
+    ];
+    
+    final roleValues = [null, 'Customer', 'Merchant', 'Driver', 'Admin'];
+
     final usersAsync = ref.watch(adminUsersProvider({
       'role': _selectedRole,
       'search': _searchQuery,
@@ -34,11 +45,17 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
       appBar: isWide
           ? null
           : AppBar(
-              title: Text('Users', style: AppTypography.display(18, weight: FontWeight.w700)),
+              title: Text(
+                tr.t('users'),
+                style: AppTypography.display(18, weight: FontWeight.w700),
+              ),
               backgroundColor: Colors.transparent,
               elevation: 0,
               actions: [
-                IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {},
+                ),
               ],
             ),
       body: Column(
@@ -50,7 +67,7 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: 'Search users...',
+                      hintText: tr.t('search_users'),
                       prefixIcon: const Icon(Icons.search, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -58,7 +75,10 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
                       ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
                     onChanged: (value) => setState(() => _searchQuery = value),
                   ),
@@ -68,11 +88,13 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
                   FilledButton.icon(
                     onPressed: () {},
                     icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Add User'),
+                    label: Text(tr.t('add_user')),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
               ],
@@ -84,21 +106,28 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
               height: 36,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _roleFilters.length,
+                itemCount: roleFilters.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, i) {
-                  final role = _roleFilters[i];
-                  final selected = role == _selectedRole;
+                  final label = roleFilters[i];
+                  final roleValue = roleValues[i];
+                  final selected = roleValue == _selectedRole;
                   return ChoiceChip(
-                    label: Text(role ?? 'All'),
+                    label: Text(label ?? tr.t('all')),
                     selected: selected,
-                    onSelected: (_) => setState(() => _selectedRole = role),
+                    onSelected: (_) => setState(() => _selectedRole = roleValue),
                     selectedColor: AppColors.primary,
                     backgroundColor: Colors.white,
-                    labelStyle: AppTypography.body(12, weight: FontWeight.w600, color: selected ? Colors.white : AppColors.ink700),
+                    labelStyle: AppTypography.body(
+                      12,
+                      weight: FontWeight.w600,
+                      color: selected ? Colors.white : AppColors.ink700,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
+                      side: BorderSide(
+                        color: selected ? AppColors.primary : AppColors.border,
+                      ),
                     ),
                   );
                 },
@@ -111,7 +140,12 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
               data: (data) {
                 final users = data['users'] ?? [];
                 if (users.isEmpty) {
-                  return Center(child: Text('No users found', style: AppTypography.body(13, color: AppColors.ink500)));
+                  return Center(
+                    child: Text(
+                      tr.t('no_users_found'),
+                      style: AppTypography.body(13, color: AppColors.ink500),
+                    ),
+                  );
                 }
 
                 if (isWide) {
@@ -136,7 +170,10 @@ class _AdminUsersState extends ConsumerState<AdminUsers> {
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
-                child: Text('Error: $error', style: const TextStyle(color: AppColors.error)),
+                child: Text(
+                  '${tr.t('error')}: $error',
+                  style: const TextStyle(color: AppColors.error),
+                ),
               ),
             ),
           ),
@@ -164,8 +201,22 @@ class _UserCard extends StatelessWidget {
     }
   }
 
+  String _getRoleText(AppLocalizations tr, String role) {
+    switch (role) {
+      case 'Admin':
+        return tr.t('role_admin');
+      case 'Merchant':
+        return tr.t('role_merchant');
+      case 'Driver':
+        return tr.t('role_driver');
+      default:
+        return tr.t('role_customer');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final roles = (user['roles'] ?? ['Customer']) as List;
     final isActive = user['is_active'] ?? true;
     final primaryRoleColor = _roleColor(roles.isNotEmpty ? roles.first : 'Customer');
@@ -178,7 +229,11 @@ class _UserCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: AppColors.ink900.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: AppColors.ink900.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Row(
@@ -187,13 +242,21 @@ class _UserCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [primaryRoleColor, primaryRoleColor.withOpacity(0.7)]),
+              gradient: LinearGradient(
+                colors: [primaryRoleColor, primaryRoleColor.withOpacity(0.7)],
+              ),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: Text(
-              user['full_name']?.isNotEmpty == true ? user['full_name'][0].toUpperCase() : '?',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+              user['full_name']?.isNotEmpty == true
+                  ? user['full_name'][0].toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -201,18 +264,33 @@ class _UserCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user['full_name'] ?? 'Unknown', style: AppTypography.body(14, weight: FontWeight.w600), overflow: TextOverflow.ellipsis),
-                Text(user['email'] ?? '', style: AppTypography.body(12, color: AppColors.ink500), overflow: TextOverflow.ellipsis),
+                Text(
+                  user['full_name'] ?? 'Unknown',
+                  style: AppTypography.body(14, weight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  user['email'] ?? '',
+                  style: AppTypography.body(12, color: AppColors.ink500),
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 4,
                   runSpacing: 4,
                   children: roles.map<Widget>((role) {
                     final color = _roleColor(role);
+                    final roleText = _getRoleText(tr, role);
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                      child: Text(role, style: AppTypography.body(10, weight: FontWeight.w600, color: color)),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        roleText,
+                        style: AppTypography.body(10, weight: FontWeight.w600, color: color),
+                      ),
                     );
                   }).toList(),
                 ),
@@ -226,8 +304,12 @@ class _UserCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              isActive ? 'Active' : 'Inactive',
-              style: AppTypography.body(10, weight: FontWeight.w600, color: isActive ? AppColors.success : AppColors.error),
+              isActive ? tr.t('active') : tr.t('inactive'),
+              style: AppTypography.body(
+                10,
+                weight: FontWeight.w600,
+                color: isActive ? AppColors.success : AppColors.error,
+              ),
             ),
           ),
           const SizedBox(width: 4),
@@ -235,10 +317,25 @@ class _UserCard extends StatelessWidget {
             icon: const Icon(Icons.more_vert, size: 20),
             onSelected: (value) {},
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'view', child: Text('View Details')),
-              PopupMenuItem(value: isActive ? 'deactivate' : 'activate', child: Text(isActive ? 'Deactivate' : 'Activate')),
-              const PopupMenuItem(value: 'role', child: Text('Change Role')),
-              const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: AppColors.error))),
+              PopupMenuItem(
+                value: 'view',
+                child: Text(tr.t('view_details')),
+              ),
+              PopupMenuItem(
+                value: isActive ? 'deactivate' : 'activate',
+                child: Text(isActive ? tr.t('deactivate') : tr.t('activate')),
+              ),
+              PopupMenuItem(
+                value: 'role',
+                child: Text(tr.t('change_role')),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(
+                  tr.t('delete'),
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              ),
             ],
           ),
         ],

@@ -1,5 +1,6 @@
 // lib/screens/user/admin/widgets/admin_side_panel.dart
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../../core/theme/typography.dart';
 
@@ -8,9 +9,17 @@ class WeekStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    
+    final labels = [
+      tr.t('mon'),
+      tr.t('tue'),
+      tr.t('wed'),
+      tr.t('thu'),
+      tr.t('fri'),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -24,7 +33,10 @@ class WeekStrip extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('This Week', style: AppTypography.display(14, weight: FontWeight.w700)),
+              Text(
+                tr.t('this_week'),
+                style: AppTypography.display(14, weight: FontWeight.w700),
+              ),
               const Spacer(),
               Icon(Icons.calendar_today_outlined, size: 15, color: AppColors.ink500),
             ],
@@ -50,7 +62,11 @@ class WeekStrip extends StatelessWidget {
                     ),
                     child: Text(
                       '${day.day}',
-                      style: AppTypography.body(12, weight: FontWeight.w700, color: isToday ? Colors.white : AppColors.ink700),
+                      style: AppTypography.body(
+                        12,
+                        weight: FontWeight.w700,
+                        color: isToday ? Colors.white : AppColors.ink700,
+                      ),
                     ),
                   ),
                 ],
@@ -62,7 +78,6 @@ class WeekStrip extends StatelessWidget {
     );
   }
 }
-
 
 class PersonQueueTile extends StatelessWidget {
   final String name;
@@ -104,14 +119,30 @@ class PersonQueueTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: AppTypography.body(12.5, weight: FontWeight.w700), overflow: TextOverflow.ellipsis),
-                Text(subtitle, style: AppTypography.body(11, color: AppColors.ink500), overflow: TextOverflow.ellipsis),
+                Text(
+                  name,
+                  style: AppTypography.body(12.5, weight: FontWeight.w700),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  subtitle,
+                  style: AppTypography.body(11, color: AppColors.ink500),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
-          _MiniIconButton(icon: Icons.check_rounded, color: AppColors.success, onTap: onApprove),
+          _MiniIconButton(
+            icon: Icons.check_rounded,
+            color: AppColors.success,
+            onTap: onApprove,
+          ),
           const SizedBox(width: 6),
-          _MiniIconButton(icon: Icons.close_rounded, color: AppColors.error, onTap: onReject),
+          _MiniIconButton(
+            icon: Icons.close_rounded,
+            color: AppColors.error,
+            onTap: onReject,
+          ),
         ],
       ),
     );
@@ -133,7 +164,10 @@ class _MiniIconButton extends StatelessWidget {
       child: Container(
         width: 26,
         height: 26,
-        decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Icon(icon, size: 14, color: color),
       ),
     );
@@ -145,10 +179,17 @@ class QueueCard extends StatelessWidget {
   final List<Widget> children;
   final VoidCallback? onViewAll;
 
-  const QueueCard({super.key, required this.title, required this.children, this.onViewAll});
+  const QueueCard({
+    super.key,
+    required this.title,
+    required this.children,
+    this.onViewAll,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -161,11 +202,23 @@ class QueueCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: AppTypography.display(14, weight: FontWeight.w700))),
+              Expanded(
+                child: Text(
+                  tr.t(title),
+                  style: AppTypography.display(14, weight: FontWeight.w700),
+                ),
+              ),
               if (onViewAll != null)
                 GestureDetector(
                   onTap: onViewAll,
-                  child: Text('View All', style: AppTypography.body(11, weight: FontWeight.w700, color: AppColors.primary)),
+                  child: Text(
+                    tr.t('view_all'),
+                    style: AppTypography.body(
+                      11,
+                      weight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -173,7 +226,10 @@ class QueueCard extends StatelessWidget {
           if (children.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text('Nothing here yet', style: AppTypography.body(12, color: AppColors.ink500)),
+              child: Text(
+                tr.t('nothing_here_yet'),
+                style: AppTypography.body(12, color: AppColors.ink500),
+              ),
             )
           else
             ...children,

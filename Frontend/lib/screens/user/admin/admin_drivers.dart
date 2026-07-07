@@ -1,7 +1,7 @@
-// D:\Delivery\frontend\lib\screens\user\admin\admin_drivers.dart
-
+// lib/screens/user/admin/admin_drivers.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/typography.dart';
 import '../../../providers/admin_provider.dart';
@@ -17,10 +17,20 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
   String? _selectedStatus;
   String _searchQuery = '';
 
-  static const _statusFilters = [null, 'Pending', 'Active', 'Suspended', 'Rejected'];
-
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
+    
+    final statusFilters = [
+      null,
+      tr.t('status_pending'),
+      tr.t('status_active'),
+      tr.t('status_suspended'),
+      tr.t('status_rejected'),
+    ];
+    
+    final statusValues = [null, 'Pending', 'Active', 'Suspended', 'Rejected'];
+
     final driversAsync = ref.watch(adminAllDriversProvider(_selectedStatus));
     final width = MediaQuery.of(context).size.width;
     final isWide = width >= 900;
@@ -31,7 +41,7 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
           ? null
           : AppBar(
               title: Text(
-                'Drivers',
+                tr.t('drivers'),
                 style: AppTypography.display(18, weight: FontWeight.w700),
               ),
               backgroundColor: Colors.transparent,
@@ -52,7 +62,7 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
-                      hintText: 'Search drivers...',
+                      hintText: tr.t('search_drivers'),
                       prefixIcon: const Icon(Icons.search, size: 20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -76,7 +86,7 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
                       ref.refresh(adminAllDriversProvider(null));
                     },
                     icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Refresh'),
+                    label: Text(tr.t('refresh')),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
@@ -95,17 +105,18 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
               height: 36,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _statusFilters.length,
+                itemCount: statusFilters.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, i) {
-                  final status = _statusFilters[i];
-                  final selected = status == _selectedStatus;
+                  final label = statusFilters[i];
+                  final statusValue = statusValues[i];
+                  final selected = statusValue == _selectedStatus;
                   return ChoiceChip(
-                    label: Text(status ?? 'All'),
+                    label: Text(label ?? tr.t('all')),
                     selected: selected,
                     onSelected: (_) {
-                      setState(() => _selectedStatus = status);
-                      ref.refresh(adminAllDriversProvider(status));
+                      setState(() => _selectedStatus = statusValue);
+                      ref.refresh(adminAllDriversProvider(statusValue));
                     },
                     selectedColor: AppColors.primary,
                     backgroundColor: Colors.white,
@@ -152,12 +163,12 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No drivers found',
+                          tr.t('no_drivers_found'),
                           style: AppTypography.display(18, weight: FontWeight.w700, color: AppColors.ink500),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Drivers will appear here when they register',
+                          tr.t('drivers_will_appear_here'),
                           style: AppTypography.body(13, color: AppColors.ink300),
                         ),
                       ],
@@ -195,14 +206,14 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
                     Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 16),
                     Text(
-                      'Error: $error',
+                      '${tr.t('error')}: $error',
                       style: const TextStyle(color: AppColors.error),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.refresh(adminAllDriversProvider(_selectedStatus)),
-                      child: const Text('Retry'),
+                      child: Text(tr.t('retry')),
                     ),
                   ],
                 ),
@@ -214,8 +225,6 @@ class _AdminDriversState extends ConsumerState<AdminDrivers> {
     );
   }
 }
-
-
 
 class _DriverCard extends StatelessWidget {
   final Map<String, dynamic> driver;
@@ -237,11 +246,28 @@ class _DriverCard extends StatelessWidget {
     }
   }
 
+  String _getStatusText(AppLocalizations tr, String status) {
+    switch (status) {
+      case 'Active':
+        return tr.t('status_active');
+      case 'Pending':
+        return tr.t('status_pending');
+      case 'Rejected':
+        return tr.t('status_rejected');
+      case 'Suspended':
+        return tr.t('status_suspended');
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tr = context.tr;
     final user = driver['User'] ?? {};
     final status = driver['status'] ?? 'Pending';
     final statusColor = _getStatusColor(status);
+    final statusText = _getStatusText(tr, status);
     final isOnline = driver['is_online'] ?? false;
 
     return Container(
@@ -306,7 +332,7 @@ class _DriverCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'Online',
+                          tr.t('online'),
                           style: AppTypography.body(9, weight: FontWeight.w700, color: AppColors.success),
                         ),
                       ),
@@ -363,7 +389,7 @@ class _DriverCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
-              status,
+              statusText,
               style: AppTypography.body(10, weight: FontWeight.w600, color: statusColor),
             ),
           ),
