@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/user_model.dart';
+import 'package:frontend/screens/user/driver/ratings_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
@@ -43,7 +44,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
       const Earnings(),
       const CurrentDeliveryScreen(),
     ];
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(driverProvider.notifier).loadDriverData();
       _updateLocation();
@@ -69,13 +70,11 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
 
   void _navigateToPage(int index) {
     final tr = context.tr;
-    
+
     if (index == 4) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const DriverProfileScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const DriverProfileScreen()),
       ).then((_) {
         ref.read(driverProvider.notifier).loadDriverData();
       });
@@ -86,9 +85,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     if (index == 5) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const DriverSettingsScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const DriverSettingsScreen()),
       );
       _closeSidebar();
       return;
@@ -126,7 +123,11 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     final user = authState.user;
 
     final sidebarItems = [
-      {'icon': Icons.dashboard_outlined, 'label': tr.t('dashboard'), 'index': 0},
+      {
+        'icon': Icons.dashboard_outlined,
+        'label': tr.t('dashboard'),
+        'index': 0,
+      },
       {
         'icon': Icons.local_shipping_outlined,
         'label': tr.t('available_orders'),
@@ -137,7 +138,11 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
         'label': tr.t('my_deliveries'),
         'index': 2,
       },
-      {'icon': Icons.monetization_on_outlined, 'label': tr.t('earnings'), 'index': 3},
+      {
+        'icon': Icons.monetization_on_outlined,
+        'label': tr.t('earnings'),
+        'index': 3,
+      },
       {
         'icon': Icons.person_outline,
         'label': tr.t('profile'),
@@ -227,9 +232,7 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      driverState.isOnline
-                          ? tr.t('online')
-                          : tr.t('offline'),
+                      driverState.isOnline ? tr.t('online') : tr.t('offline'),
                       style: AppTypography.body(
                         12,
                         weight: FontWeight.w600,
@@ -424,6 +427,45 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
             ),
             const Divider(color: Colors.white24, height: 1),
             Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                tr.t('more'),
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+
+            _SidebarItem(
+              icon: Icons.star_outline,
+              label: tr.t('ratings'),
+              isSelected: false,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const RatingsScreen(),
+                  ),
+                );
+                _closeSidebar();
+              },
+            ),
+
+            _SidebarItem(
+              icon: Icons.notifications_outlined,
+              label: tr.t('notifications'),
+              isSelected: false,
+              onTap: () {
+                // TODO: فتح صفحة الإشعارات
+                _closeSidebar();
+              },
+            ),
+
+            const Divider(color: Colors.white24, height: 1),
+            Padding(
               padding: const EdgeInsets.all(16),
               child: _SidebarItem(
                 icon: Icons.logout_rounded,
@@ -464,7 +506,6 @@ class _DriverDashboardState extends ConsumerState<DriverDashboard> {
     );
   }
 }
-
 
 class _SidebarItem extends StatelessWidget {
   final IconData icon;
@@ -531,7 +572,6 @@ class _SidebarItem extends StatelessWidget {
     );
   }
 }
-
 
 class _DriverHomeContent extends ConsumerWidget {
   const _DriverHomeContent();
@@ -616,7 +656,8 @@ class _DriverHomeContent extends ConsumerWidget {
             const SizedBox(height: 24),
             _buildStatsSection(tr, stats),
             const SizedBox(height: 24),
-            if (driverState.isOnline) _buildUpdateLocationButton(context, ref, tr),
+            if (driverState.isOnline)
+              _buildUpdateLocationButton(context, ref, tr),
             const SizedBox(height: 20),
           ],
         ),
@@ -799,10 +840,7 @@ class _DriverHomeContent extends ConsumerWidget {
               style: AppTypography.display(18, weight: FontWeight.w700),
             ),
             const Spacer(),
-            TextButton(
-              onPressed: () {},
-              child: Text(tr.t('view_all')),
-            ),
+            TextButton(onPressed: () {}, child: Text(tr.t('view_all'))),
           ],
         ),
         const SizedBox(height: 12),

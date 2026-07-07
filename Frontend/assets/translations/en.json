@@ -297,6 +297,12 @@
   "onboarding_title_2": "Fast & Reliable Delivery",
   "onboarding_desc_2": "A wide network of drivers and delivery companies delivers your order quickly inside and outside the city.",
   "onboarding_title_3": "Join as Merchant or Driver",
-  "onboarding_desc_3": "Have a shop, motorcycle or delivery company? Sign up with us and expand your business easily."
-
+  "onboarding_desc_3": "Have a shop, motorcycle or delivery company? Sign up with us and expand your business easily.",
+  "ratings": "Ratings",
+  "rating_distribution": "Rating Distribution",
+  "reviews": "reviews",
+  "no_ratings_found": "No ratings found",
+  "more": "More",
+  "go_online": "Go Online",
+  "go_offline": "Go Offline"
 }
