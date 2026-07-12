@@ -14,7 +14,7 @@ class OrderStatusTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final tr = context.tr;
     final statuses = _getStatuses(tr);
-    final currentIndex = _getCurrentStatusIndex(order.status.statusId);
+    final currentIndex = _getCurrentStatusIndex(order.statusDetail?.statusId ?? 0);
 
     return Container(
       padding: const EdgeInsets.all(16),

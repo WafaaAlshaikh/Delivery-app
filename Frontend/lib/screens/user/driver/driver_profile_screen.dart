@@ -74,11 +74,11 @@ class _DriverProfileScreenState extends ConsumerState<DriverProfileScreen> {
       );
 
       await ref.read(driverProvider.notifier).updateProfile(
-        vehicle_type: _selectedVehicleType,
-        vehicle_plate: _vehiclePlateController.text,
-        vehicle_color: _vehicleColorController.text,
-        vehicle_model: _vehicleModelController.text,
-        license_number: _licenseNumberController.text,
+        vehicleType: _selectedVehicleType,
+        vehiclePlate: _vehiclePlateController.text,
+        vehicleColor: _vehicleColorController.text,
+        vehicleModel: _vehicleModelController.text,
+        licenseNumber: _licenseNumberController.text,
       );
 
       if (mounted) {

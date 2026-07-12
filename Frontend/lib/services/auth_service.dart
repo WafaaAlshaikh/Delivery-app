@@ -1,4 +1,5 @@
 // lib/services/auth_service.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import '../core/constants/api_constants.dart';
 import '../data/models/auth_response.dart';
@@ -11,45 +12,45 @@ class AuthService {
   final ApiService _apiService = ApiService();
   final StorageService _storageService = StorageService();
 
+  Future<AuthResponse> signup({
+    required String fullName,
+    required String email,
+    required String password,
+    String? phone,
+    String role = 'Customer',
+    String? businessType,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        ApiConstants.signup,
+        data: {
+          'full_name': fullName,
+          'email': email,
+          'password': password,
+          'phone': phone,
+          'role': role,
+          'businessType': businessType,
+        },
+      );
 
-Future<AuthResponse> signup({
-  required String fullName,
-  required String email,
-  required String password,
-  String? phone,
-  String role = 'Customer',
-  String? businessType, 
-}) async {
-  try {
-    final response = await _apiService.post(
-      ApiConstants.signup,
-      data: {
-        'full_name': fullName,
-        'email': email,
-        'password': password,
-        'phone': phone,
-        'role': role,
-        'businessType': businessType, 
-      },
-    );
+      final authResponse = AuthResponse.fromJson(response.data);
 
-    final authResponse = AuthResponse.fromJson(response.data);
-    
-    if (authResponse.tempToken != null) {
-      await _storageService.saveTempToken(authResponse.tempToken!);
+      if (authResponse.tempToken != null) {
+        await _storageService.saveTempToken(authResponse.tempToken!);
+      }
+
+      return authResponse;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Signup error: $e');
+      }
+      return AuthResponse(
+        success: false,
+        message: 'Network error. Please check your connection.',
+      );
     }
-    
-    return authResponse;
-  } catch (e) {
-    if (kDebugMode) {
-      print('Signup error: $e');
-    }
-    return AuthResponse(
-      success: false,
-      message: 'Network error. Please check your connection.',
-    );
   }
-}
+
   Future<AuthResponse> verifySignup({
     required String email,
     required String otp,
@@ -73,7 +74,7 @@ Future<AuthResponse> signup({
       );
 
       final authResponse = AuthResponse.fromJson(response.data);
-      
+
       if (authResponse.success && authResponse.token != null) {
         await _storageService.saveToken(authResponse.token!);
         if (authResponse.user != null) {
@@ -81,7 +82,7 @@ Future<AuthResponse> signup({
         }
         await _storageService.clearTempToken();
       }
-      
+
       return authResponse;
     } catch (e) {
       if (kDebugMode) {
@@ -129,29 +130,42 @@ Future<AuthResponse> signup({
   Future<AuthResponse> login({
     required String email,
     required String password,
+    String? fcmToken,
   }) async {
     try {
+      String? fcmToken;
+      try {
+        fcmToken = await FirebaseMessaging.instance.getToken();
+        if (fcmToken != null) {
+          print('📱 FCM Token for login: $fcmToken');
+        }
+      } catch (e) {
+        print('⚠️ Could not get FCM token: $e');
+      }
+
       final response = await _apiService.post(
         ApiConstants.login,
         data: {
           'email': email,
           'password': password,
+          'fcm_token': fcmToken,
         },
       );
 
       final authResponse = AuthResponse.fromJson(response.data);
-      
+
       if (authResponse.success && authResponse.token != null) {
         await _storageService.saveToken(authResponse.token!);
         if (authResponse.user != null) {
           await _storageService.saveUser(authResponse.user!);
         }
       }
-      
-      if (authResponse.requireVerification == true && authResponse.tempToken != null) {
+
+      if (authResponse.requireVerification == true &&
+          authResponse.tempToken != null) {
         await _storageService.saveTempToken(authResponse.tempToken!);
       }
-      
+
       return authResponse;
     } catch (e) {
       if (kDebugMode) {
@@ -221,7 +235,7 @@ Future<AuthResponse> signup({
       );
 
       await _storageService.clearAll();
-      
+
       return AuthResponse.fromJson(response.data);
     } catch (e) {
       await _storageService.clearAll();
@@ -371,7 +385,6 @@ Future<AuthResponse> signup({
     }
   }
 
-  
   Future<Map<String, dynamic>> getDriverStatus() async {
     try {
       final response = await _apiService.get('/api/auth/driver/status');
@@ -426,5 +439,4 @@ Future<AuthResponse> signup({
       );
     }
   }
-
 }

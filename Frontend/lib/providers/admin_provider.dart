@@ -1,17 +1,19 @@
-// D:\Delivery\frontend\lib\providers\admin_provider.dart
-
+// lib/providers/admin_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../services/admin_service.dart';
+import '../data/models/admin_models.dart';
 
 final adminServiceProvider = Provider<AdminService>((ref) {
+  print('🔍 [DEBUG] adminServiceProvider created');
   return AdminService();
 });
 
 
-final adminDashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final adminDashboardProvider = FutureProvider<AdminDashboardStats>((ref) async {
   final service = ref.read(adminServiceProvider);
-  final response = await service.getDashboardStats();
-  return response['data'];
+  final stats = await service.getDashboardStats();
+  return stats;
 });
 
 final adminChartDataProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, period) async {
@@ -21,13 +23,13 @@ final adminChartDataProvider = FutureProvider.family<Map<String, dynamic>, Strin
 });
 
 
-final adminUsersProvider = FutureProvider.family<Map<String, dynamic>, Map<String, dynamic>>((ref, params) async {
+final adminUsersProvider = FutureProvider.family<Map<String, dynamic>, ({String? role, String? search, int page, int limit})>((ref, params) async {
   final service = ref.read(adminServiceProvider);
   final response = await service.getUsers(
-    role: params['role'],
-    search: params['search'],
-    page: params['page'] ?? 1,
-    limit: params['limit'] ?? 20,
+    role: params.role,
+    search: params.search,
+    page: params.page,
+    limit: params.limit,
   );
   return response['data'];
 });
@@ -44,6 +46,7 @@ final adminMerchantsProvider = FutureProvider<List<dynamic>>((ref) async {
   final response = await service.getMerchants();
   return response['data'];
 });
+
 
 final adminDriversProvider = FutureProvider<List<dynamic>>((ref) async {
   final service = ref.read(adminServiceProvider);
@@ -81,10 +84,24 @@ final adminOrderDetailsProvider = FutureProvider.family<Map<String, dynamic>, in
 });
 
 
+final adminStoresProvider = FutureProvider<List<AdminStoreModel>>((ref) async {
+  final service = ref.read(adminServiceProvider);
+  final stores = await service.getStores();
+  return stores;
+});
+
+final adminCategoriesProvider = FutureProvider<List<AdminCategoryModel>>((ref) async {
+  final service = ref.read(adminServiceProvider);
+  final categories = await service.getCategories();
+  return categories;
+});
+
 class AdminState {
   final bool isLoading;
   final String? error;
-  final Map<String, dynamic>? dashboardData;
+  final AdminDashboardStats? dashboardData;
+  final List<AdminStoreModel>? stores;
+  final List<AdminCategoryModel>? categories;
   final List<dynamic>? users;
   final List<dynamic>? merchants;
   final List<dynamic>? drivers;
@@ -94,6 +111,8 @@ class AdminState {
     this.isLoading = false,
     this.error,
     this.dashboardData,
+    this.stores,
+    this.categories,
     this.users,
     this.merchants,
     this.drivers,
@@ -103,7 +122,9 @@ class AdminState {
   AdminState copyWith({
     bool? isLoading,
     String? error,
-    Map<String, dynamic>? dashboardData,
+    AdminDashboardStats? dashboardData,
+    List<AdminStoreModel>? stores,
+    List<AdminCategoryModel>? categories,
     List<dynamic>? users,
     List<dynamic>? merchants,
     List<dynamic>? drivers,
@@ -113,6 +134,8 @@ class AdminState {
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       dashboardData: dashboardData ?? this.dashboardData,
+      stores: stores ?? this.stores,
+      categories: categories ?? this.categories,
       users: users ?? this.users,
       merchants: merchants ?? this.merchants,
       drivers: drivers ?? this.drivers,
@@ -132,7 +155,39 @@ class AdminNotifier extends StateNotifier<AdminState> {
       final data = await _adminService.getDashboardStats();
       state = state.copyWith(
         isLoading: false,
-        dashboardData: data['data'],
+        dashboardData: data,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> loadStores() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final stores = await _adminService.getStores();
+      state = state.copyWith(
+        isLoading: false,
+        stores: stores,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> loadCategories() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final categories = await _adminService.getCategories();
+      state = state.copyWith(
+        isLoading: false,
+        categories: categories,
       );
     } catch (e) {
       state = state.copyWith(
@@ -174,6 +229,22 @@ class AdminNotifier extends StateNotifier<AdminState> {
     }
   }
 
+  Future<void> loadMerchants() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final data = await _adminService.getMerchants();
+      state = state.copyWith(
+        isLoading: false,
+        merchants: data['data'],
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
   Future<void> reviewDriverApplication({
     required int profileId,
     required String action,
@@ -187,7 +258,67 @@ class AdminNotifier extends StateNotifier<AdminState> {
         notes: notes,
       );
       state = state.copyWith(isLoading: false);
-      await loadDrivers(); 
+      await loadDrivers();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> approveStore(String storeId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final result = await _adminService.approveStore(storeId);
+      if (result.success) {
+        await loadStores();
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: result.message,
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> rejectStore(String storeId, {String? reason}) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final result = await _adminService.rejectStore(storeId, reason: reason);
+      if (result.success) {
+        await loadStores();
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: result.message,
+        );
+      }
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+    }
+  }
+
+  Future<void> deleteStore(String storeId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final result = await _adminService.deleteStore(storeId);
+      if (result.success) {
+        await loadStores();
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: result.message,
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

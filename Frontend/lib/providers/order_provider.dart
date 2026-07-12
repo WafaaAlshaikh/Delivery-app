@@ -1,5 +1,6 @@
-// frontend/lib/providers/order_provider.dart
+// lib/providers/order_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../data/models/order_model.dart';
 import '../services/order_service.dart';
 import '../services/location_service.dart';
@@ -12,8 +13,6 @@ final locationServiceProvider = Provider<LocationService>((ref) {
   return LocationService();
 });
 
-
-
 final availableOrdersProvider = FutureProvider.family<List<OrderModel>, Map<String, dynamic>>((ref, params) async {
   final orderService = ref.read(orderServiceProvider);
   final locationService = ref.read(locationServiceProvider);
@@ -24,23 +23,21 @@ final availableOrdersProvider = FutureProvider.family<List<OrderModel>, Map<Stri
   final filterBy = params['filterBy'] ?? 'all';
   final radius = params['radius'] ?? 10;
   
-  return orderService.getAvailableOrders(
+  final result = await orderService.getAvailableOrders(
     latitude: position?.latitude,
     longitude: position?.longitude,
     radius: radius,
     sortBy: sortBy,
     filterBy: filterBy,
   );
+  
+  return result.orders;
 });
-
-
 
 final orderDetailsProvider = FutureProvider.family<OrderModel, int>((ref, orderId) async {
   final orderService = ref.read(orderServiceProvider);
-  return orderService.getOrderDetails(orderId);
+  return orderService.getOrderDetails(orderId as String);
 });
-
-
 
 class OrderState {
   final bool isLoading;
@@ -94,7 +91,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
     try {
       final position = await _locationService.getCurrentLocation();
       
-      final orders = await _orderService.getAvailableOrders(
+      final result = await _orderService.getAvailableOrders(
         latitude: position?.latitude,
         longitude: position?.longitude,
         radius: radius,
@@ -102,13 +99,20 @@ class OrderNotifier extends StateNotifier<OrderState> {
         filterBy: filterBy,
       );
       
-      state = state.copyWith(
-        isLoading: false,
-        orders: orders,
-        error: null,
-        currentSort: sortBy,
-        currentFilter: filterBy,
-      );
+      if (result.success) {
+        state = state.copyWith(
+          isLoading: false,
+          orders: result.orders,
+          error: null,
+          currentSort: sortBy,
+          currentFilter: filterBy,
+        );
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: result.message,
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -123,7 +127,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
     try {
       final position = await _locationService.getCurrentLocation();
       
-      final orders = await _orderService.getAvailableOrders(
+      final result = await _orderService.getAvailableOrders(
         latitude: position?.latitude,
         longitude: position?.longitude,
         radius: 10,
@@ -131,11 +135,18 @@ class OrderNotifier extends StateNotifier<OrderState> {
         filterBy: state.currentFilter,
       );
       
-      state = state.copyWith(
-        isRefreshing: false,
-        orders: orders,
-        error: null,
-      );
+      if (result.success) {
+        state = state.copyWith(
+          isRefreshing: false,
+          orders: result.orders,
+          error: null,
+        );
+      } else {
+        state = state.copyWith(
+          isRefreshing: false,
+          error: result.message,
+        );
+      }
     } catch (e) {
       state = state.copyWith(
         isRefreshing: false,

@@ -69,6 +69,13 @@ const Business = sequelize.define('Business', {
       max: 5
     }
   },
+  address: { type: DataTypes.STRING(255), allowNull: true },
+city: { type: DataTypes.STRING(50), allowNull: true },
+region: { type: DataTypes.STRING(50), allowNull: true },
+opening_time: { type: DataTypes.STRING(20), allowNull: true },
+closing_time: { type: DataTypes.STRING(20), allowNull: true },
+delivery_fee: { type: DataTypes.DECIMAL(10, 2), allowNull: true, defaultValue: 0 },
+rejection_reason: { type: DataTypes.TEXT, allowNull: true },
 
 latitude: {
   type: DataTypes.DECIMAL(10, 8),

@@ -2,175 +2,278 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import '../../../core/localization/app_localizations.dart';
-import '../../../core/theme/colors.dart';
-import '../../../core/theme/typography.dart';
 import '../../../data/models/order_model.dart';
-import '../../../services/socket_service.dart';
+import '../../../providers/order_provider.dart';
 import '../../../widgets/maps/live_location_map.dart';
 import '../../../widgets/order/order_status_timeline.dart';
+import '../../../core/theme/colors.dart';
 
 class CustomerTrackingScreen extends ConsumerStatefulWidget {
-  final OrderModel order;
+  final String orderId;
 
-  const CustomerTrackingScreen({super.key, required this.order});
+  const CustomerTrackingScreen({
+    super.key,
+    required this.orderId,
+  });
 
   @override
   ConsumerState<CustomerTrackingScreen> createState() => _CustomerTrackingScreenState();
 }
 
 class _CustomerTrackingScreenState extends ConsumerState<CustomerTrackingScreen> {
-  late IO.Socket _socket;
-  LatLng? _driverLocation;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _initSocket();
-    _fetchDriverLocation();
-  }
-
-  void _initSocket() {
-    _socket = SocketService.getSocket();
-    _socket.on('driver_location_updated', (data) {
-      if (data['orderId'] == widget.order.orderId) {
-        setState(() {
-          _driverLocation = LatLng(
-            data['latitude'],
-            data['longitude'],
-          );
-          _isLoading = false;
-        });
-      }
-    });
-  }
-
-  Future<void> _fetchDriverLocation() async {
-    // يمكن إضافة API لجلب الموقع الحالي للسائق إذا كان الطلب قيد التنفيذ
-    // وللتبسيط، سنفترض أن الموقع سيتم تحديثه عبر WebSocket
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    _socket.off('driver_location_updated');
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final tr = context.tr;
-    final order = widget.order;
+    final orderAsync = ref.watch(orderDetailsProvider(widget.orderId as int));
 
     return Scaffold(
-      backgroundColor: AppColors.canvas,
       appBar: AppBar(
-        title: Text(
-          tr.t('track_order'),
-          style: AppTypography.display(18, weight: FontWeight.w700),
-        ),
+        title: const Text('تتبع الطلب'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 300,
-              child: LiveLocationMap(
-                order: order,
-                driverLocation: _driverLocation,
-                isLoading: _isLoading,
+      body: orderAsync.when(
+        data: (order) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: LiveLocationMap(
+                    order: order,
+                    driverLocation: _getDriverLocation(order),
+                  ),
+                ),
+                
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'رقم الطلب: ${order.orderNumber}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(order.status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              _getStatusText(order.status),
+                              style: TextStyle(
+                                color: _getStatusColor(order.status),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      Text(
+                        order.storeName ?? order.business?.name ?? 'المتجر',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      OrderStatusTimeline(order: order),
+                      const SizedBox(height: 20),
+                      
+                      _buildDetailItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'عنوان التوصيل',
+                        value: order.deliveryAddress, 
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      _buildDetailItem(
+                        icon: Icons.payment_outlined,
+                        label: 'طريقة الدفع',
+                        value: order.paymentMethod,
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      _buildDetailItem(
+                        icon: Icons.attach_money,
+                        label: 'المبلغ الإجمالي',
+                        value: '${order.finalAmount.toStringAsFixed(2)} ₪', 
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      if (order.customer != null)
+                        _buildDetailItem(
+                          icon: Icons.person_outline,
+                          label: 'العميل',
+                          value: order.customer!.fullName,
+                        ),
+                      const SizedBox(height: 8),
+                      
+                      if (order.customer?.phone != null)
+                        _buildDetailItem(
+                          icon: Icons.phone_outlined,
+                          label: 'الهاتف',
+                          value: order.customer!.phone!,
+                        ),
+                      const SizedBox(height: 20),
+                      
+                      if (order.driverId != null)
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              // TODO: تنفيذ الاتصال بالسائق
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('جاري الاتصال بالسائق...'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.phone),
+                            label: const Text('الاتصال بالسائق'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.grey[400],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: OrderStatusTimeline(order: order),
-            ),
-            const SizedBox(height: 16),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildOrderInfoCard(tr, order),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                'حدث خطأ أثناء تحميل الطلب',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[500],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.refresh(orderDetailsProvider(widget.orderId as int));
+                },
+                child: const Text('إعادة المحاولة'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildOrderInfoCard(AppLocalizations tr, OrderModel order) {
+  LatLng? _getDriverLocation(OrderModel order) {
+    if (order.driverId != null) {
+
+      return null; // مؤقتاً
+    }
+    return null;
+  }
+
+  Widget _buildDetailItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink900.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
         children: [
+          Icon(
+            icon,
+            size: 20,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(width: 12),
           Text(
-            '${tr.t('order')} #${order.orderId}',
-            style: AppTypography.display(16, weight: FontWeight.w700),
+            '$label: ',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.storefront_outlined, size: 16, color: AppColors.ink500),
-              const SizedBox(width: 8),
-              Text(
-                order.business.name,
-                style: AppTypography.body(14, color: AppColors.ink700),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 16, color: AppColors.ink500),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  order.deliveryAddress.fullAddress,
-                  style: AppTypography.body(14, color: AppColors.ink700),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                tr.t('total'),
-                style: AppTypography.body(14, color: AppColors.ink500),
-              ),
-              Text(
-                '\$${order.total.toStringAsFixed(2)}',
-                style: AppTypography.display(16, weight: FontWeight.w700, color: AppColors.primary),
-              ),
-            ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'Pending': return 'قيد الانتظار';
+      case 'Confirmed': return 'تم التأكيد';
+      case 'Preparing': return 'قيد التحضير';
+      case 'Ready': return 'جاهز للاستلام';
+      case 'PickedUp': return 'مع السائق';
+      case 'Delivered': return 'تم التوصيل';
+      case 'Cancelled': return 'ملغي';
+      case 'Refunded': return 'مسترجع';
+      default: return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending': return Colors.orange;
+      case 'Confirmed': return Colors.blue;
+      case 'Preparing': return Colors.blue;
+      case 'Ready': return Colors.purple;
+      case 'PickedUp': return Colors.purple;
+      case 'Delivered': return Colors.green;
+      case 'Cancelled': return Colors.red;
+      case 'Refunded': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 }

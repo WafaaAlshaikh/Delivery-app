@@ -27,8 +27,27 @@ class ApiConstants {
   static const String logout = '/api/auth/logout';
   static const String profile = '/api/auth/profile';
   static const String updateProfile = '/api/auth/profile';
-  
+
+  static const String stores = '/api/stores';
+  static const String myStore = '/api/stores/my-store';
+  static const String storeCategories = '/api/stores/categories';
+
+
+  static const String orders = '/api/orders';
+  static const String myOrders = '/api/orders/my';
+  static const String availableOrders = '/api/orders/available';
+  static String orderStatus(String orderId) => '/api/orders/$orderId/status';
+
+  static const String adminDashboard = '/api/admin/dashboard';
+  static const String adminStores = '/api/admin/stores';
+  static const String adminUsers = '/api/admin/users';
+  static const String adminCategories = '/api/admin/categories';
+  static String adminApproveStore(String storeId) => '/api/admin/stores/$storeId/approve';
+  static String adminRejectStore(String storeId) => '/api/admin/stores/$storeId/reject';
+  static String adminDeleteStore(String storeId) => '/api/admin/stores/$storeId';
+
   static const String contentType = 'application/json';
   static const String authorization = 'Authorization';
   static const String bearer = 'Bearer';
+
 }

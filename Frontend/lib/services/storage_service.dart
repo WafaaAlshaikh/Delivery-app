@@ -69,4 +69,16 @@ class StorageService {
     final token = prefs.getString(AppConstants.tokenKey);
     return token != null && token.isNotEmpty;
   }
+
+  static const String _fcmTokenKey = 'fcm_token';
+  
+  Future<void> saveFCMToken(String token) async {
+    final prefs = await _instance;
+    await prefs.setString(_fcmTokenKey, token);
+  }
+
+  Future<String?> getFCMToken() async {
+    final prefs = await _instance;
+    return prefs.getString(_fcmTokenKey);
+  }
 }

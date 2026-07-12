@@ -1,12 +1,11 @@
 // lib/providers/driver_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../services/driver_service.dart';
 
 final driverServiceProvider = Provider<DriverService>((ref) {
   return DriverService();
 });
-
-
 
 final driverProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(driverServiceProvider);
@@ -14,13 +13,11 @@ final driverProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return response['data'];
 });
 
-
 final driverStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final service = ref.read(driverServiceProvider);
   final response = await service.getDriverStats();
   return response['data'];
 });
-
 
 class DriverState {
   final bool isLoading;
@@ -114,20 +111,20 @@ class DriverNotifier extends StateNotifier<DriverState> {
   }
 
   Future<void> updateProfile({
-    String? vehicle_type,
-    String? vehicle_plate,
-    String? vehicle_color,
-    String? vehicle_model,
-    String? license_number,
+    String? vehicleType,
+    String? vehiclePlate,
+    String? vehicleColor,
+    String? vehicleModel,
+    String? licenseNumber,
   }) async {
     try {
       state = state.copyWith(isLoading: true);
       final response = await _service.updateDriverProfile(
-        vehicle_type: vehicle_type,
-        vehicle_plate: vehicle_plate,
-        vehicle_color: vehicle_color,
-        vehicle_model: vehicle_model,
-        license_number: license_number,
+        vehicle_type: vehicleType,
+        vehicle_plate: vehiclePlate,
+        vehicle_color: vehicleColor,
+        vehicle_model: vehicleModel,
+        license_number: licenseNumber,
       );
       
       final updatedProfile = response['data'];

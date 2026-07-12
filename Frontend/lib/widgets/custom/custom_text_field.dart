@@ -8,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final String label;
   final String hint;
   final bool obscureText;
+  final bool readOnly;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
@@ -29,6 +30,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.onChanged,
     this.focusNode,
+    this.readOnly = false,
   });
 
   @override
@@ -42,6 +44,7 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLines: maxLines,
       onChanged: onChanged,
+      readOnly: readOnly,
       style: const TextStyle(
         fontSize: 15,
         color: AppColors.ink900,

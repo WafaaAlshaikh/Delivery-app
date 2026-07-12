@@ -41,33 +41,47 @@ class _LiveLocationMapState extends State<LiveLocationMap> {
     }
   }
 
+  LatLng? _getBusinessLocation() {
+    if (widget.order.business != null) {
+      final business = widget.order.business!;
+      if (business.latitude != null && business.longitude != null) {
+        return LatLng(business.latitude!, business.longitude!);
+      }
+    }
+    return null;
+  }
+
+  LatLng? _getDeliveryLocation() {
+    if (widget.order.deliveryAddressDetail != null) {
+      final address = widget.order.deliveryAddressDetail!;
+      if (address.latitude != null && address.longitude != null) {
+        return LatLng(address.latitude!, address.longitude!);
+      }
+    }
+    return null;
+  }
+
   void _updateMarkers() {
     _markers.clear();
 
-    if (widget.order.business.latitude != null &&
-        widget.order.business.longitude != null) {
+    final businessLocation = _getBusinessLocation();
+    if (businessLocation != null) {
       _markers.add(
         Marker(
           markerId: const MarkerId('business'),
-          position: LatLng(
-            widget.order.business.latitude!,
-            widget.order.business.longitude!,
-          ),
+          position: businessLocation,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
           infoWindow: const InfoWindow(title: 'Restaurant'),
         ),
       );
     }
 
-    if (widget.order.deliveryAddress.latitude != null &&
-        widget.order.deliveryAddress.longitude != null) {
+    final deliveryLocation = _getDeliveryLocation();
+    if (deliveryLocation != null) {
       _markers.add(
         Marker(
           markerId: const MarkerId('customer'),
-          position: LatLng(
-            widget.order.deliveryAddress.latitude!,
-            widget.order.deliveryAddress.longitude!,
-          ),
+          position: deliveryLocation,
           icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
           infoWindow: const InfoWindow(title: 'Your Location'),
         ),
@@ -93,20 +107,16 @@ class _LiveLocationMapState extends State<LiveLocationMap> {
 
     if (widget.driverLocation != null) {
       points.add(widget.driverLocation!);
-    } else if (widget.order.business.latitude != null &&
-        widget.order.business.longitude != null) {
-      points.add(LatLng(
-        widget.order.business.latitude!,
-        widget.order.business.longitude!,
-      ));
+    } else {
+      final businessLocation = _getBusinessLocation();
+      if (businessLocation != null) {
+        points.add(businessLocation);
+      }
     }
 
-    if (widget.order.deliveryAddress.latitude != null &&
-        widget.order.deliveryAddress.longitude != null) {
-      points.add(LatLng(
-        widget.order.deliveryAddress.latitude!,
-        widget.order.deliveryAddress.longitude!,
-      ));
+    final deliveryLocation = _getDeliveryLocation();
+    if (deliveryLocation != null) {
+      points.add(deliveryLocation);
     }
 
     if (points.length >= 2) {
@@ -147,14 +157,23 @@ class _LiveLocationMapState extends State<LiveLocationMap> {
       );
     }
 
-    final initialPosition = widget.driverLocation ??
-        (widget.order.business.latitude != null &&
-                widget.order.business.longitude != null
-            ? LatLng(
-                widget.order.business.latitude!,
-                widget.order.business.longitude!,
-              )
-            : const LatLng(30.0444, 31.2357)); 
+    LatLng initialPosition;
+    
+    if (widget.driverLocation != null) {
+      initialPosition = widget.driverLocation!;
+    } else {
+      final businessLocation = _getBusinessLocation();
+      if (businessLocation != null) {
+        initialPosition = businessLocation;
+      } else {
+        final deliveryLocation = _getDeliveryLocation();
+        if (deliveryLocation != null) {
+          initialPosition = deliveryLocation;
+        } else {
+          initialPosition = const LatLng(30.0444, 31.2357);
+        }
+      }
+    }
 
     return GoogleMap(
       initialCameraPosition: CameraPosition(

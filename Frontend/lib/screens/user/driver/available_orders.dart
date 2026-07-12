@@ -34,7 +34,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
   void _initSocket() {
     _socket = SocketService.getSocket();
-    
+
     _socket?.on('new_offer', (data) {
       if (mounted) {
         final offer = OfferModel.fromJson(data);
@@ -50,9 +50,8 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
         setState(() {
           final index = _offers.indexWhere((o) => o.offerId == data['offerId']);
           if (index != -1) {
-            _offers[index] = _offers[index].copyWith(
-              remainingSeconds: data['remaining']
-            );
+            _offers[index] =
+                _offers[index].copyWith(remainingSeconds: data['remaining']);
           }
         });
       }
@@ -106,13 +105,13 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
     try {
       final driverService = ref.read(driverServiceProvider);
       final response = await driverService.getAvailableOffers();
-      
+
       if (response['success'] == true) {
         final data = response['data'];
         final offers = (data['offers'] as List? ?? [])
             .map((json) => OfferModel.fromJson(json))
             .toList();
-        
+
         setState(() {
           _offers = offers;
           _isLoading = false;
@@ -133,8 +132,8 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
   void _showOfferNotification(OfferModel offer) {
     final tr = context.tr;
-    final businessName = offer.order.business.name;
-    
+    final businessName = offer.order.business?.name;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -143,7 +142,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                tr.t('new_offer_from').replaceAll('{name}', businessName),
+                tr.t('new_offer_from').replaceAll('{name}', businessName!),
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
@@ -237,7 +236,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
   Future<void> _acceptOffer(OfferModel offer) async {
     final tr = context.tr;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -261,11 +260,11 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${tr.t('store')}: ${offer.order.business.name}',
+                    '${tr.t('store')}: ${offer.order.business?.name}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
-                    '${tr.t('total')}: \$${offer.order.total.toStringAsFixed(2)}',
+                    '${tr.t('total')}: \$${offer.order.finalAmount.toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   Text(
@@ -309,7 +308,7 @@ class _AvailableOrdersState extends ConsumerState<AvailableOrders> {
 
   Future<void> _rejectOffer(OfferModel offer) async {
     final tr = context.tr;
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(

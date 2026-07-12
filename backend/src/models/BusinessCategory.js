@@ -34,6 +34,11 @@ const BusinessCategory = sequelize.define('BusinessCategory', {
   status: {
     type: DataTypes.ENUM('Active', 'Inactive'),
     defaultValue: 'Active'
+  },
+  sort_order: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    allowNull: false
   }
 }, {
   tableName: 'business_categories',

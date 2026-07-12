@@ -1,76 +1,83 @@
 // src/controllers/authController.js
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { Op } = require('sequelize');
-const { User, Otp, Role, UserRole,DriverProfile,Order } = require('../models');
-const { sendOTPEmail, sendWelcomeEmail } = require('../services/emailService');
-const { 
-  generateOTP, 
-  generateTempToken, 
-  storeOTP, 
-  verifyOTP, 
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
+const {
+  User,
+  Otp,
+  Role,
+  UserRole,
+  DriverProfile,
+  Order,
+} = require("../models");
+const { sendOTPEmail, sendWelcomeEmail } = require("../services/emailService");
+const {
+  generateOTP,
+  generateTempToken,
+  storeOTP,
+  verifyOTP,
   deleteOTP,
-  canRequestOTP 
-} = require('../services/otpService');
-const { validateEmail, validatePassword } = require('../utils/validators');
-const DriverVerificationService = require('../services/driverVerificationService');
-require('dotenv').config();
+  canRequestOTP,
+} = require("../services/otpService");
+const { validateEmail, validatePassword } = require("../utils/validators");
+const DriverVerificationService = require("../services/driverVerificationService");
+require("dotenv").config();
+const NotificationService = require("../services/notificationService");
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 const signupInitial = async (req, res) => {
-  const { 
-    full_name, 
-    email, 
-    password, 
-    phone, 
-    role = 'Customer',
-    businessType 
+  const {
+    full_name,
+    email,
+    password,
+    phone,
+    role = "Customer",
+    businessType,
   } = req.body;
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [SIGNUP INITIAL] Received signup request');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('👤 User Data:');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [SIGNUP INITIAL] Received signup request");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("👤 User Data:");
   console.log(`   ├─ full_name: ${full_name}`);
   console.log(`   ├─ email: ${email}`);
   console.log(`   ├─ role: ${role}`);
-  console.log(`   ├─ businessType: ${businessType || 'Not provided'}`);
-  console.log(`   └─ phone: ${phone || 'Not provided'}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`   ├─ businessType: ${businessType || "Not provided"}`);
+  console.log(`   └─ phone: ${phone || "Not provided"}`);
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!full_name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Full name, email, and password are required'
+        message: "Full name, email, and password are required",
       });
     }
 
     if (!validateEmail(email)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid email format'
+        message: "Invalid email format",
       });
     }
 
     if (!validatePassword(password)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long'
+        message: "Password must be at least 6 characters long",
       });
     }
 
-    const roleRecord = await Role.findOne({ 
-      where: { name: role } 
+    const roleRecord = await Role.findOne({
+      where: { name: role },
     });
-    
+
     if (!roleRecord) {
       return res.status(400).json({
         success: false,
-        message: `Invalid role. Please choose from: Admin, Merchant, Driver, Customer, Support`
+        message: `Invalid role. Please choose from: Admin, Merchant, Driver, Customer, Support`,
       });
     }
 
@@ -78,15 +85,16 @@ const signupInitial = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'Email already registered. Please login or use a different email.'
+        message:
+          "Email already registered. Please login or use a different email.",
       });
     }
 
-    const canRequest = await canRequestOTP(email, 'Verification', 1);
+    const canRequest = await canRequestOTP(email, "Verification", 1);
     if (!canRequest.allowed) {
       return res.status(429).json({
         success: false,
-        message: canRequest.message
+        message: canRequest.message,
       });
     }
 
@@ -99,65 +107,58 @@ const signupInitial = async (req, res) => {
       password,
       phone: phone || null,
       role,
-      businessType: businessType || null 
+      businessType: businessType || null,
     };
 
     const tempToken = generateTempToken(tempData, JWT_SECRET);
 
-    await storeOTP(
-      email,
-      otp,
-      'Verification',
-      tempToken,
-      {
-        ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.headers['user-agent']
-      }
-    );
+    await storeOTP(email, otp, "Verification", tempToken, {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers["user-agent"],
+    });
 
-    await sendOTPEmail(email, otp, 'Verification');
+    await sendOTPEmail(email, otp, "Verification");
 
     console.log(`✅ OTP sent successfully to ${email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'OTP sent successfully to your email. Please verify to complete registration.',
+      message:
+        "OTP sent successfully to your email. Please verify to complete registration.",
       tempToken,
-      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`
+      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`,
     });
-
   } catch (error) {
-    console.error('❌ Signup initial error:', error);
+    console.error("❌ Signup initial error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during signup. Please try again.'
+      message: "Server error during signup. Please try again.",
     });
   }
 };
 
-
 const resendOTP = async (req, res) => {
   const { email } = req.body;
-  const tempToken = req.headers.authorization?.split(' ')[1];
+  const tempToken = req.headers.authorization?.split(" ")[1];
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [RESEND OTP] Resending OTP');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [RESEND OTP] Resending OTP");
   console.log(`   ├─ email: ${email}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required'
+        message: "Email is required",
       });
     }
 
     if (!tempToken) {
       return res.status(400).json({
         success: false,
-        message: 'Temporary token is required'
+        message: "Temporary token is required",
       });
     }
 
@@ -165,7 +166,7 @@ const resendOTP = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'Email already registered. Please login.'
+        message: "Email already registered. Please login.",
       });
     }
 
@@ -175,154 +176,132 @@ const resendOTP = async (req, res) => {
     } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired temporary token. Please start signup again.'
+        message:
+          "Invalid or expired temporary token. Please start signup again.",
       });
     }
 
     if (tempData.email !== email) {
       return res.status(400).json({
         success: false,
-        message: 'Email mismatch. Please start signup again.'
+        message: "Email mismatch. Please start signup again.",
       });
     }
 
-    const canRequest = await canRequestOTP(email, 'Verification', 1);
+    const canRequest = await canRequestOTP(email, "Verification", 1);
     if (!canRequest.allowed) {
       return res.status(429).json({
         success: false,
-        message: canRequest.message
+        message: canRequest.message,
       });
     }
 
-    await deleteOTP(email, 'Verification');
+    await deleteOTP(email, "Verification");
 
     const otp = generateOTP();
     console.log(`🔑 New OTP for ${email}: ${otp}`);
 
-    await storeOTP(
-      email,
-      otp,
-      'Verification',
-      tempToken,
-      {
-        ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.headers['user-agent']
-      }
-    );
+    await storeOTP(email, otp, "Verification", tempToken, {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers["user-agent"],
+    });
 
-    await sendOTPEmail(email, otp, 'Verification');
+    await sendOTPEmail(email, otp, "Verification");
 
     console.log(`✅ OTP resent successfully to ${email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'New OTP sent successfully to your email',
-      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`
+      message: "New OTP sent successfully to your email",
+      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`,
     });
-
   } catch (error) {
-    console.error('❌ Resend OTP error:', error);
+    console.error("❌ Resend OTP error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.'
+      message: "Server error. Please try again.",
     });
   }
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, fcm_token } = req.body;
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [LOGIN] Login attempt');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [LOGIN] Login attempt");
   console.log(`   ├─ email: ${email}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: "Email and password are required",
       });
     }
 
-    const user = await User.findOne({ 
-      where: { email }
+    const user = await User.findOne({
+      where: { email },
     });
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: "Invalid email or password",
       });
     }
 
     if (!user.is_active) {
       return res.status(403).json({
         success: false,
-        message: 'Your account has been deactivated. Please contact support.'
+        message: "Your account has been deactivated. Please contact support.",
       });
     }
 
     if (!user.is_verified) {
-      const otp = generateOTP();
-      const tempData = { email: user.email, user_id: user.user_id };
-      const tempToken = generateTempToken(tempData, JWT_SECRET, 15);
-
-      await storeOTP(
-        user.email,
-        otp,
-        'Verification',
-        tempToken,
-        {
-          ip: req.ip || req.connection.remoteAddress,
-          userAgent: req.headers['user-agent']
-        }
-      );
-
-      await sendOTPEmail(user.email, otp, 'Verification');
-
-      return res.status(200).json({
-        success: false,
-        requireVerification: true,
-        message: 'Account not verified. OTP sent to your email.',
-        tempToken,
-        expiresIn: '15 minutes'
-      });
+      // ... كود إرسال OTP ...
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: "Invalid email or password",
       });
+    }
+
+    if (fcm_token) {
+      await user.update({ fcm_token: fcm_token });
+      console.log(`✅ FCM Token saved for user: ${user.email}`);
+
+      await NotificationService.registerToken(user.user_id, fcm_token);
     }
 
     await user.update({ last_login: new Date() });
 
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
-      include: [{ model: Role, attributes: ['name'] }]
+      include: [{ model: Role, attributes: ["name"] }],
     });
-    const roles = userRoles.map(ur => ur.Role.name);
+    const roles = userRoles.map((ur) => ur.Role.name);
 
     const token = jwt.sign(
-      { 
-        user_id: user.user_id, 
+      {
+        user_id: user.user_id,
         email: user.email,
-        roles: roles
+        roles: roles,
       },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN },
     );
 
-    console.log(`✅ User logged in: ${user.email} (${roles.join(', ')})`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log(`✅ User logged in: ${user.email} (${roles.join(", ")})`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       token,
       user: {
         user_id: user.user_id,
@@ -331,15 +310,14 @@ const login = async (req, res) => {
         phone: user.phone,
         roles: roles,
         is_verified: user.is_verified,
-        profile_image: user.profile_image
-      }
+        profile_image: user.profile_image,
+      },
     });
-
   } catch (error) {
-    console.error('❌ Login error:', error);
+    console.error("❌ Login error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error during login. Please try again.'
+      message: "Server error during login. Please try again.",
     });
   }
 };
@@ -347,16 +325,16 @@ const login = async (req, res) => {
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [FORGOT PASSWORD] Request received');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [FORGOT PASSWORD] Request received");
   console.log(`   ├─ email: ${email}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: 'Email is required'
+        message: "Email is required",
       });
     }
 
@@ -364,50 +342,44 @@ const forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(200).json({
         success: true,
-        message: 'If your email is registered, you will receive a password reset OTP.'
+        message:
+          "If your email is registered, you will receive a password reset OTP.",
       });
     }
 
-    const canRequest = await canRequestOTP(email, 'ResetPassword', 1);
+    const canRequest = await canRequestOTP(email, "ResetPassword", 1);
     if (!canRequest.allowed) {
       return res.status(429).json({
         success: false,
-        message: canRequest.message
+        message: canRequest.message,
       });
     }
 
-    await deleteOTP(email, 'ResetPassword');
+    await deleteOTP(email, "ResetPassword");
 
     const otp = generateOTP();
     console.log(`🔑 Password reset OTP for ${email}: ${otp}`);
 
-    await storeOTP(
-      email,
-      otp,
-      'ResetPassword',
-      null,
-      {
-        ip: req.ip || req.connection.remoteAddress,
-        userAgent: req.headers['user-agent']
-      }
-    );
+    await storeOTP(email, otp, "ResetPassword", null, {
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers["user-agent"],
+    });
 
-    await sendOTPEmail(email, otp, 'ResetPassword');
+    await sendOTPEmail(email, otp, "ResetPassword");
 
     console.log(`✅ Password reset OTP sent to ${email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'Password reset OTP sent to your email',
-      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`
+      message: "Password reset OTP sent to your email",
+      expiresIn: `${process.env.OTP_EXPIRY_MINUTES || 15} minutes`,
     });
-
   } catch (error) {
-    console.error('❌ Forgot password error:', error);
+    console.error("❌ Forgot password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.'
+      message: "Server error. Please try again.",
     });
   }
 };
@@ -415,32 +387,32 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   const { email, otp, new_password } = req.body;
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [RESET PASSWORD] Request received');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [RESET PASSWORD] Request received");
   console.log(`   ├─ email: ${email}`);
   console.log(`   └─ otp: ${otp}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email || !otp || !new_password) {
       return res.status(400).json({
         success: false,
-        message: 'Email, OTP, and new password are required'
+        message: "Email, OTP, and new password are required",
       });
     }
 
     if (!validatePassword(new_password)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long'
+        message: "Password must be at least 6 characters long",
       });
     }
 
-    const verification = await verifyOTP(email, otp, 'ResetPassword', true);
+    const verification = await verifyOTP(email, otp, "ResetPassword", true);
     if (!verification.valid) {
       return res.status(400).json({
         success: false,
-        message: verification.message
+        message: verification.message,
       });
     }
 
@@ -448,50 +420,49 @@ const resetPassword = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     const hashedPassword = await bcrypt.hash(new_password, 10);
 
-    await user.update({ 
-      password_hash: hashedPassword
+    await user.update({
+      password_hash: hashedPassword,
     });
 
-    await deleteOTP(email, 'ResetPassword');
+    await deleteOTP(email, "ResetPassword");
 
     console.log(`✅ Password reset successful for ${email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'Password reset successful. You can now login with your new password.'
+      message:
+        "Password reset successful. You can now login with your new password.",
     });
-
   } catch (error) {
-    console.error('❌ Reset password error:', error);
+    console.error("❌ Reset password error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.'
+      message: "Server error. Please try again.",
     });
   }
 };
 
-
 const verifyOTPOnly = async (req, res) => {
-  const { email, otp, type = 'Verification' } = req.body;
+  const { email, otp, type = "Verification" } = req.body;
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [VERIFY OTP] Verifying OTP');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [VERIFY OTP] Verifying OTP");
   console.log(`   ├─ email: ${email}`);
   console.log(`   └─ type: ${type}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: 'Email and OTP are required'
+        message: "Email and OTP are required",
       });
     }
 
@@ -499,11 +470,11 @@ const verifyOTPOnly = async (req, res) => {
     if (!verification.valid) {
       return res.status(400).json({
         success: false,
-        message: verification.message
+        message: verification.message,
       });
     }
 
-    if (type === 'Verification') {
+    if (type === "Verification") {
       const user = await User.findOne({ where: { email } });
       if (user) {
         await user.update({ is_verified: true });
@@ -512,18 +483,17 @@ const verifyOTPOnly = async (req, res) => {
     }
 
     console.log(`✅ OTP verified successfully for ${email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'OTP verified successfully'
+      message: "OTP verified successfully",
     });
-
   } catch (error) {
-    console.error('❌ Verify OTP error:', error);
+    console.error("❌ Verify OTP error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error. Please try again.'
+      message: "Server error. Please try again.",
     });
   }
 };
@@ -531,28 +501,28 @@ const verifyOTPOnly = async (req, res) => {
 const logout = async (req, res) => {
   res.status(200).json({
     success: true,
-    message: 'Logged out successfully'
+    message: "Logged out successfully",
   });
 };
 
 const getProfile = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.user_id, {
-      attributes: { exclude: ['password_hash'] }
+      attributes: { exclude: ["password_hash"] },
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
-      include: [{ model: Role, attributes: ['name'] }]
+      include: [{ model: Role, attributes: ["name"] }],
     });
-    const roles = userRoles.map(ur => ur.Role.name);
+    const roles = userRoles.map((ur) => ur.Role.name);
 
     res.status(200).json({
       success: true,
@@ -568,19 +538,17 @@ const getProfile = async (req, res) => {
         gender: user.gender,
         birth_date: user.birth_date,
         last_login: user.last_login,
-        created_at: user.created_at
-      }
+        created_at: user.created_at,
+      },
     });
-
   } catch (error) {
-    console.error('❌ Get profile error:', error);
+    console.error("❌ Get profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
 };
-
 
 const updateProfile = async (req, res) => {
   const { full_name, phone, profile_image, gender, birth_date } = req.body;
@@ -590,7 +558,7 @@ const updateProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -599,18 +567,18 @@ const updateProfile = async (req, res) => {
       phone: phone || user.phone,
       profile_image: profile_image || user.profile_image,
       gender: gender || user.gender,
-      birth_date: birth_date || user.birth_date
+      birth_date: birth_date || user.birth_date,
     });
 
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
-      include: [{ model: Role, attributes: ['name'] }]
+      include: [{ model: Role, attributes: ["name"] }],
     });
-    const roles = userRoles.map(ur => ur.Role.name);
+    const roles = userRoles.map((ur) => ur.Role.name);
 
     res.status(200).json({
       success: true,
-      message: 'Profile updated successfully',
+      message: "Profile updated successfully",
       user: {
         user_id: user.user_id,
         full_name: user.full_name,
@@ -619,88 +587,84 @@ const updateProfile = async (req, res) => {
         roles: roles,
         profile_image: user.profile_image,
         gender: user.gender,
-        birth_date: user.birth_date
-      }
+        birth_date: user.birth_date,
+      },
     });
-
   } catch (error) {
-    console.error('❌ Update profile error:', error);
+    console.error("❌ Update profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
 };
-
 
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: { exclude: ['password_hash'] },
-      order: [['created_at', 'DESC']]
+      attributes: { exclude: ["password_hash"] },
+      order: [["created_at", "DESC"]],
     });
 
-    const usersWithRoles = await Promise.all(users.map(async (user) => {
-      const userRoles = await UserRole.findAll({
-        where: { user_id: user.user_id },
-        include: [{ model: Role, attributes: ['name'] }]
-      });
-      const roles = userRoles.map(ur => ur.Role.name);
-      
-      return {
-        ...user.toJSON(),
-        roles
-      };
-    }));
+    const usersWithRoles = await Promise.all(
+      users.map(async (user) => {
+        const userRoles = await UserRole.findAll({
+          where: { user_id: user.user_id },
+          include: [{ model: Role, attributes: ["name"] }],
+        });
+        const roles = userRoles.map((ur) => ur.Role.name);
+
+        return {
+          ...user.toJSON(),
+          roles,
+        };
+      }),
+    );
 
     res.json({
       success: true,
-      users: usersWithRoles
+      users: usersWithRoles,
     });
-
   } catch (error) {
-    console.error('❌ Error fetching users:', error);
+    console.error("❌ Error fetching users:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
 };
 
-
-
-
 const verifySignup = async (req, res) => {
   const { email, otp } = req.body;
-  const tempToken = req.headers.authorization?.split(' ')[1];
+  const tempToken = req.headers.authorization?.split(" ")[1];
 
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📥 [VERIFY SIGNUP] Verifying OTP');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("📥 [VERIFY SIGNUP] Verifying OTP");
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log(`   ├─ email: ${email}`);
   console.log(`   └─ otp: ${otp}`);
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   try {
     if (!email || !otp) {
       return res.status(400).json({
         success: false,
-        message: 'Email and OTP are required'
+        message: "Email and OTP are required",
       });
     }
 
     if (!tempToken) {
       return res.status(400).json({
         success: false,
-        message: 'Temporary token is required. Please start signup again.'
+        message: "Temporary token is required. Please start signup again.",
       });
     }
 
-    const verification = await verifyOTP(email, otp, 'Verification', true);
+    const verification = await verifyOTP(email, otp, "Verification", true);
     if (!verification.valid) {
       return res.status(400).json({
         success: false,
-        message: verification.message
+        message: verification.message,
       });
     }
 
@@ -710,14 +674,15 @@ const verifySignup = async (req, res) => {
     } catch (error) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid or expired temporary token. Please start signup again.'
+        message:
+          "Invalid or expired temporary token. Please start signup again.",
       });
     }
 
     if (tempData.email !== email) {
       return res.status(400).json({
         success: false,
-        message: 'Email mismatch. Please start signup again.'
+        message: "Email mismatch. Please start signup again.",
       });
     }
 
@@ -725,7 +690,7 @@ const verifySignup = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'Email already registered. Please login.'
+        message: "Email already registered. Please login.",
       });
     }
 
@@ -741,32 +706,32 @@ const verifySignup = async (req, res) => {
       profile_image: null,
       gender: null,
       birth_date: null,
-      last_login: new Date()
+      last_login: new Date(),
     });
 
     console.log(`✅ User created: ${user.email} (ID: ${user.user_id})`);
 
-    let assignedRole = tempData.role || 'Customer';
-    
-    const roleRecord = await Role.findOne({ 
-      where: { name: assignedRole } 
+    let assignedRole = tempData.role || "Customer";
+
+    const roleRecord = await Role.findOne({
+      where: { name: assignedRole },
     });
-    
+
     if (!roleRecord) {
-      const customerRole = await Role.findOne({ where: { name: 'Customer' } });
+      const customerRole = await Role.findOne({ where: { name: "Customer" } });
       if (customerRole) {
         await UserRole.create({
           user_id: user.user_id,
           role_id: customerRole.role_id,
-          assigned_at: new Date()
+          assigned_at: new Date(),
         });
-        assignedRole = 'Customer';
+        assignedRole = "Customer";
       }
     } else {
       await UserRole.create({
         user_id: user.user_id,
         role_id: roleRecord.role_id,
-        assigned_at: new Date()
+        assigned_at: new Date(),
       });
     }
 
@@ -775,9 +740,9 @@ const verifySignup = async (req, res) => {
     let driverProfile = null;
     let needsOnboarding = false;
 
-    if (assignedRole === 'Driver') {
+    if (assignedRole === "Driver") {
       try {
-        console.log('🚗 Creating driver profile...');
+        console.log("🚗 Creating driver profile...");
 
         driverProfile = await DriverProfile.create({
           user_id: user.user_id,
@@ -787,52 +752,51 @@ const verifySignup = async (req, res) => {
           vehicle_model: null,
           license_number: null,
           license_image: null,
-          status: 'Pending', 
+          status: "Pending",
           is_online: false,
           rating: 0,
           total_deliveries: 0,
-          onboarding_completed_at: new Date()
+          onboarding_completed_at: new Date(),
         });
 
-        console.log(`✅ DriverProfile created with ID: ${driverProfile.profile_id}`);
-
+        console.log(
+          `✅ DriverProfile created with ID: ${driverProfile.profile_id}`,
+        );
 
         needsOnboarding = true;
-
-
       } catch (driverError) {
-        console.error('⚠️ Failed to setup driver profile:', driverError);
+        console.error("⚠️ Failed to setup driver profile:", driverError);
       }
     }
 
-    await deleteOTP(email, 'Verification');
+    await deleteOTP(email, "Verification");
 
     try {
       await sendWelcomeEmail(user.email, user.full_name, assignedRole);
       console.log(`✅ Welcome email sent to ${user.email}`);
     } catch (emailError) {
-      console.error('⚠️ Failed to send welcome email:', emailError);
+      console.error("⚠️ Failed to send welcome email:", emailError);
     }
 
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
-      include: [{ model: Role, attributes: ['name'] }]
+      include: [{ model: Role, attributes: ["name"] }],
     });
-    const roles = userRoles.map(ur => ur.Role.name);
+    const roles = userRoles.map((ur) => ur.Role.name);
 
     const token = jwt.sign(
-      { 
-        user_id: user.user_id, 
+      {
+        user_id: user.user_id,
         email: user.email,
-        roles: roles
+        roles: roles,
       },
       JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
+      { expiresIn: JWT_EXPIRES_IN },
     );
 
     const responseData = {
       success: true,
-      message: 'Account created successfully',
+      message: "Account created successfully",
       token,
       user: {
         user_id: user.user_id,
@@ -842,11 +806,11 @@ const verifySignup = async (req, res) => {
         roles: roles,
         is_verified: user.is_verified,
         is_active: user.is_active,
-        profile_image: user.profile_image
-      }
+        profile_image: user.profile_image,
+      },
     };
 
-    if (assignedRole === 'Driver' && driverProfile) {
+    if (assignedRole === "Driver" && driverProfile) {
       responseData.driverStatus = {
         profile_id: driverProfile.profile_id,
         status: driverProfile.status,
@@ -855,30 +819,40 @@ const verifySignup = async (req, res) => {
         isApproved: false,
         isPending: true,
         needsOnboarding: needsOnboarding,
-        message: needsOnboarding 
-          ? '📝 Please complete your driver profile to start delivering.'
-          : '📋 Your application is being reviewed.',
-        screen: needsOnboarding ? 'onboarding' : 'pending'
+        message: needsOnboarding
+          ? "📝 Please complete your driver profile to start delivering."
+          : "📋 Your application is being reviewed.",
+        screen: needsOnboarding ? "onboarding" : "pending",
       };
     }
 
-    console.log(`✅ User created successfully: ${user.email} (${roles.join(', ')})`);
+    if (assignedRole === "Merchant") {
+      responseData.merchantStatus = {
+        hasStore: false,
+        needsStoreSetup: true,
+        suggestedCategory: tempData.businessType || null,
+        message: "🏬 Please set up your store to start receiving orders.",
+        screen: "store-setup",
+      };
+    }
+
+    console.log(
+      `✅ User created successfully: ${user.email} (${roles.join(", ")})`,
+    );
     console.log(`   └─ Driver needs onboarding: ${needsOnboarding}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(201).json(responseData);
-
   } catch (error) {
-    console.error('❌ Verify signup error:', error);
-    console.error('❌ Error stack:', error.stack);
-    
+    console.error("❌ Verify signup error:", error);
+    console.error("❌ Error stack:", error.stack);
+
     res.status(500).json({
       success: false,
-      message: 'Server error during verification. Please try again.'
+      message: "Server error during verification. Please try again.",
     });
   }
 };
-
 
 const completeDriverOnboarding = async (req, res) => {
   try {
@@ -888,46 +862,46 @@ const completeDriverOnboarding = async (req, res) => {
       vehicle_color,
       vehicle_model,
       license_number,
-      license_image 
+      license_image,
     } = req.body;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📥 [DRIVER ONBOARDING] Completing profile');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📥 [DRIVER ONBOARDING] Completing profile");
     console.log(`   ├─ User ID: ${req.user.user_id}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    const requiredFields = ['vehicle_type', 'license_number'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    
+    const requiredFields = ["vehicle_type", "license_number"];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
+
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: `Missing required fields: ${missingFields.join(', ')}`
+        message: `Missing required fields: ${missingFields.join(", ")}`,
       });
     }
 
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found. Please contact support.'
+        message: "Driver profile not found. Please contact support.",
       });
     }
 
-    if (driverProfile.status === 'Active') {
+    if (driverProfile.status === "Active") {
       return res.status(400).json({
         success: false,
-        message: 'Your account is already active.'
+        message: "Your account is already active.",
       });
     }
 
-    if (driverProfile.status === 'Rejected') {
+    if (driverProfile.status === "Rejected") {
       return res.status(400).json({
         success: false,
-        message: `Your application was rejected: ${driverProfile.rejection_reason || 'No reason provided'}. Please contact support.`
+        message: `Your application was rejected: ${driverProfile.rejection_reason || "No reason provided"}. Please contact support.`,
       });
     }
 
@@ -938,35 +912,38 @@ const completeDriverOnboarding = async (req, res) => {
       vehicle_model: vehicle_model || null,
       license_number: license_number,
       license_image: license_image || null,
-      onboarding_completed_at: new Date()
+      onboarding_completed_at: new Date(),
     });
 
-    const autoApprovalResult = await DriverVerificationService.processAutoApproval(
-      driverProfile.profile_id
+    const autoApprovalResult =
+      await DriverVerificationService.processAutoApproval(
+        driverProfile.profile_id,
+      );
+
+    console.log("✅ Auto-approval result:", autoApprovalResult);
+
+    const updatedProfile = await DriverProfile.findByPk(
+      driverProfile.profile_id,
     );
-
-    console.log('✅ Auto-approval result:', autoApprovalResult);
-
-    const updatedProfile = await DriverProfile.findByPk(driverProfile.profile_id);
 
     console.log(`✅ Driver onboarding completed for user ${req.user.user_id}`);
     console.log(`   └─ Status: ${updatedProfile.status}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: updatedProfile.status === 'Active' 
-        ? '🎉 Your driver account is now active! You can start delivering.'
-        : '✅ Profile updated successfully. Your application is being reviewed.',
+      message:
+        updatedProfile.status === "Active"
+          ? "🎉 Your driver account is now active! You can start delivering."
+          : "✅ Profile updated successfully. Your application is being reviewed.",
       data: updatedProfile,
-      autoApproval: autoApprovalResult || null
+      autoApproval: autoApprovalResult || null,
     });
-
   } catch (error) {
-    console.error('❌ Complete driver onboarding error:', error);
+    console.error("❌ Complete driver onboarding error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error completing onboarding.'
+      message: "Server error completing onboarding.",
     });
   }
 };
@@ -974,13 +951,13 @@ const completeDriverOnboarding = async (req, res) => {
 const getDriverStatus = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
@@ -989,24 +966,25 @@ const getDriverStatus = async (req, res) => {
       data: {
         status: driverProfile.status,
         isOnline: driverProfile.is_online,
-        isActive: driverProfile.status === 'Active',
-        isPending: driverProfile.status === 'Pending',
-        isSuspended: driverProfile.status === 'Suspended',
-        isRejected: driverProfile.status === 'Rejected',
+        isActive: driverProfile.status === "Active",
+        isPending: driverProfile.status === "Pending",
+        isSuspended: driverProfile.status === "Suspended",
+        isRejected: driverProfile.status === "Rejected",
         autoApproved: driverProfile.auto_approved || false,
         approvedAt: driverProfile.approved_at,
         adminNotes: driverProfile.admin_notes,
         rejectionReason: driverProfile.rejection_reason,
         vehicleType: driverProfile.vehicle_type,
-        hasCompleteInfo: !!(driverProfile.license_number && driverProfile.vehicle_plate)
-      }
+        hasCompleteInfo: !!(
+          driverProfile.license_number && driverProfile.vehicle_plate
+        ),
+      },
     });
-
   } catch (error) {
-    console.error('❌ Get driver status error:', error);
+    console.error("❌ Get driver status error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching driver status'
+      message: "Server error fetching driver status",
     });
   }
 };
@@ -1014,25 +992,27 @@ const getDriverStatus = async (req, res) => {
 const canGoOnline = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
-    const canGoOnline = driverProfile.status === 'Active';
+    const canGoOnline = driverProfile.status === "Active";
     const reasons = [];
 
-    if (driverProfile.status === 'Pending') {
-      reasons.push('Your application is still being reviewed');
-    } else if (driverProfile.status === 'Suspended') {
-      reasons.push('Your account has been suspended');
-    } else if (driverProfile.status === 'Rejected') {
-      reasons.push(`Your application was rejected: ${driverProfile.rejection_reason || 'No reason provided'}`);
+    if (driverProfile.status === "Pending") {
+      reasons.push("Your application is still being reviewed");
+    } else if (driverProfile.status === "Suspended") {
+      reasons.push("Your account has been suspended");
+    } else if (driverProfile.status === "Rejected") {
+      reasons.push(
+        `Your application was rejected: ${driverProfile.rejection_reason || "No reason provided"}`,
+      );
     }
 
     res.status(200).json({
@@ -1040,38 +1020,43 @@ const canGoOnline = async (req, res) => {
       data: {
         canGoOnline,
         status: driverProfile.status,
-        reasons: reasons
-      }
+        reasons: reasons,
+      },
     });
-
   } catch (error) {
-    console.error('❌ Can go online error:', error);
+    console.error("❌ Can go online error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
 };
 
 const resubmitDriverApplication = async (req, res) => {
   try {
-    const { vehicle_type, vehicle_plate, vehicle_color, vehicle_model, license_number } = req.body;
+    const {
+      vehicle_type,
+      vehicle_plate,
+      vehicle_color,
+      vehicle_model,
+      license_number,
+    } = req.body;
 
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
-    if (driverProfile.status !== 'Rejected') {
+    if (driverProfile.status !== "Rejected") {
       return res.status(400).json({
         success: false,
-        message: `Cannot resubmit. Current status: ${driverProfile.status}`
+        message: `Cannot resubmit. Current status: ${driverProfile.status}`,
       });
     }
 
@@ -1081,30 +1066,32 @@ const resubmitDriverApplication = async (req, res) => {
       vehicle_color: vehicle_color || driverProfile.vehicle_color,
       vehicle_model: vehicle_model || driverProfile.vehicle_model,
       license_number: license_number || driverProfile.license_number,
-      status: 'Pending',
+      status: "Pending",
       rejection_reason: null,
       admin_notes: null,
-      auto_approved: false
+      auto_approved: false,
     });
 
-    const autoApprovalResult = await DriverVerificationService.processAutoApproval(
-      driverProfile.profile_id
-    );
+    const autoApprovalResult =
+      await DriverVerificationService.processAutoApproval(
+        driverProfile.profile_id,
+      );
 
-    const updatedProfile = await DriverProfile.findByPk(driverProfile.profile_id);
+    const updatedProfile = await DriverProfile.findByPk(
+      driverProfile.profile_id,
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Application resubmitted successfully',
+      message: "Application resubmitted successfully",
       data: updatedProfile,
-      autoApproval: autoApprovalResult || null
+      autoApproval: autoApprovalResult || null,
     });
-
   } catch (error) {
-    console.error('❌ Resubmit driver application error:', error);
+    console.error("❌ Resubmit driver application error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error'
+      message: "Server error",
     });
   }
 };
@@ -1112,25 +1099,25 @@ const resubmitDriverApplication = async (req, res) => {
 const getDriverProfile = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: driverProfile
+      data: driverProfile,
     });
   } catch (error) {
-    console.error('❌ Get driver profile error:', error);
+    console.error("❌ Get driver profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching driver profile'
+      message: "Server error fetching driver profile",
     });
   }
 };
@@ -1142,17 +1129,17 @@ const updateDriverProfile = async (req, res) => {
       vehicle_plate,
       vehicle_color,
       vehicle_model,
-      license_number
+      license_number,
     } = req.body;
 
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
@@ -1161,19 +1148,19 @@ const updateDriverProfile = async (req, res) => {
       vehicle_plate: vehicle_plate || driverProfile.vehicle_plate,
       vehicle_color: vehicle_color || driverProfile.vehicle_color,
       vehicle_model: vehicle_model || driverProfile.vehicle_model,
-      license_number: license_number || driverProfile.license_number
+      license_number: license_number || driverProfile.license_number,
     });
 
     res.status(200).json({
       success: true,
-      message: 'Driver profile updated successfully',
-      data: driverProfile
+      message: "Driver profile updated successfully",
+      data: driverProfile,
     });
   } catch (error) {
-    console.error('❌ Update driver profile error:', error);
+    console.error("❌ Update driver profile error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating driver profile'
+      message: "Server error updating driver profile",
     });
   }
 };
@@ -1184,13 +1171,13 @@ const toggleDriverOnline = async (req, res) => {
     const { latitude, longitude } = req.body;
 
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
@@ -1198,19 +1185,19 @@ const toggleDriverOnline = async (req, res) => {
       is_online: is_online !== undefined ? is_online : !driverProfile.is_online,
       current_latitude: latitude || driverProfile.current_latitude,
       current_longitude: longitude || driverProfile.current_longitude,
-      last_location_update: new Date()
+      last_location_update: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: `Driver is now ${driverProfile.is_online ? 'online' : 'offline'}`,
-      data: driverProfile
+      message: `Driver is now ${driverProfile.is_online ? "online" : "offline"}`,
+      data: driverProfile,
     });
   } catch (error) {
-    console.error('❌ Toggle driver online error:', error);
+    console.error("❌ Toggle driver online error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error toggling online status'
+      message: "Server error toggling online status",
     });
   }
 };
@@ -1222,41 +1209,41 @@ const updateDriverLocation = async (req, res) => {
     if (!latitude || !longitude) {
       return res.status(400).json({
         success: false,
-        message: 'Latitude and longitude are required'
+        message: "Latitude and longitude are required",
       });
     }
 
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
     await driverProfile.update({
       current_latitude: latitude,
       current_longitude: longitude,
-      last_location_update: new Date()
+      last_location_update: new Date(),
     });
 
     res.status(200).json({
       success: true,
-      message: 'Location updated successfully',
+      message: "Location updated successfully",
       data: {
         latitude: driverProfile.current_latitude,
         longitude: driverProfile.current_longitude,
-        last_update: driverProfile.last_location_update
-      }
+        last_update: driverProfile.last_location_update,
+      },
     });
   } catch (error) {
-    console.error('❌ Update driver location error:', error);
+    console.error("❌ Update driver location error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating location'
+      message: "Server error updating location",
     });
   }
 };
@@ -1264,37 +1251,37 @@ const updateDriverLocation = async (req, res) => {
 const getDriverStats = async (req, res) => {
   try {
     const driverProfile = await DriverProfile.findOne({
-      where: { user_id: req.user.user_id }
+      where: { user_id: req.user.user_id },
     });
 
     if (!driverProfile) {
       return res.status(404).json({
         success: false,
-        message: 'Driver profile not found'
+        message: "Driver profile not found",
       });
     }
 
     const completedDeliveries = await Order.count({
       where: {
         driver_id: req.user.user_id,
-        status_id: 8 
-      }
+        status_id: 8,
+      },
     });
 
-    const earningsResult = await Order.sum('total', {
+    const earningsResult = await Order.sum("total", {
       where: {
         driver_id: req.user.user_id,
-        status_id: 8
-      }
+        status_id: 8,
+      },
     });
 
     const currentOrders = await Order.count({
       where: {
         driver_id: req.user.user_id,
         status_id: {
-          [Op.between]: [2, 7]
-        }
-      }
+          [Op.between]: [2, 7],
+        },
+      },
     });
 
     res.status(200).json({
@@ -1305,18 +1292,44 @@ const getDriverStats = async (req, res) => {
         total_earnings: earningsResult || 0,
         current_orders: currentOrders,
         is_online: driverProfile.is_online,
-        status: driverProfile.status
-      }
+        status: driverProfile.status,
+      },
     });
   } catch (error) {
-    console.error('❌ Get driver stats error:', error);
+    console.error("❌ Get driver stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching driver stats'
+      message: "Server error fetching driver stats",
     });
   }
 };
 
+const registerFCMToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const userId = req.user.user_id;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "FCM token is required",
+      });
+    }
+
+    await User.update({ fcm_token: token }, { where: { user_id: userId } });
+
+    res.status(200).json({
+      success: true,
+      message: "FCM token registered successfully",
+    });
+  } catch (error) {
+    console.error("❌ Register FCM token error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error registering FCM token",
+    });
+  }
+};
 
 module.exports = {
   signupInitial,
@@ -1338,5 +1351,5 @@ module.exports = {
   completeDriverOnboarding,
   getDriverStatus,
   canGoOnline,
-  resubmitDriverApplication
+  resubmitDriverApplication,
 };

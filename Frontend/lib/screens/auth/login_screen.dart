@@ -1,8 +1,10 @@
 // lib/screens/auth/login_screen.dart
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:frontend/screens/auth/role_selection_screen.dart';
+import 'package:frontend/screens/auth/post_auth_router.dart';
+import 'package:frontend/screens/auth/signup_screen.dart';
 import '../../core/theme/colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../providers/auth_provider.dart';
@@ -12,7 +14,6 @@ import '../../widgets/motif/auth_bits.dart';
 import '../../widgets/motif/auth_shell.dart';
 import 'forgot_password_screen.dart';
 import 'verify_otp_screen.dart';
-import '../home/home_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -36,11 +37,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _submit(AuthNotifier authNotifier) {
     if (_formKey.currentState!.validate()) {
-      authNotifier.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      _getFCMTokenAndLogin(authNotifier);
     }
+  }
+
+  Future<void> _getFCMTokenAndLogin(AuthNotifier authNotifier) async {
+    String? fcmToken;
+    try {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+      print('📱 FCM Token: $fcmToken');
+    } catch (e) {
+      print('⚠️ Could not get FCM token: $e');
+    }
+    
+    await authNotifier.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+      fcmToken: fcmToken,
+    );
   }
 
   @override
@@ -52,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const PostAuthRouter()),
         );
       });
     }
@@ -74,8 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return AuthShell(
       brandHeadline: 'Every order,\non the fastest route.',
-      brandCaption:
-          'Track your food, groceries and parcels in real time — from checkout to your doorstep.',
+      brandCaption: 'Track your food, groceries and parcels in real time — from checkout to your doorstep.',
       child: ResponsiveCenter(
         maxWidth: 440,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -151,7 +164,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   actionText: 'Sign up',
                   onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const RoleSelectionScreen()),
+                    MaterialPageRoute(builder: (context) => const SignupScreen()),
                   ),
                 ),
                 const SizedBox(height: 24),

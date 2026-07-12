@@ -1,6 +1,8 @@
 // lib/screens/auth/verify_otp_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/screens/auth/post_auth_router.dart';
+import 'post_auth_router.dart';
 import 'package:pinput/pinput.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/colors.dart';
@@ -85,7 +87,7 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const PostAuthRouter()),
         );
       });
     }

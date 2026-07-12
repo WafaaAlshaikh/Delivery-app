@@ -1,5 +1,6 @@
 // lib/providers/auth_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../data/models/auth_response.dart';
 import '../data/models/user_model.dart';
 import '../services/auth_service.dart';
@@ -73,7 +74,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           user: user,
           isInitialized: true,
         );
-        
+
         if (user.isDriver) {
           final driverStatus = await getDriverStatus();
           state = state.copyWith(driverStatus: driverStatus);
@@ -94,7 +95,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> initialize() async {
     await _checkAuth();
   }
-
 
   Future<void> signup({
     required String fullName,
@@ -128,7 +128,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
   }
-
 
   Future<Map<String, dynamic>> verifySignup({
     required String email,
@@ -236,13 +235,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    String? fcmToken,
+  }) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       final response = await _authService.login(
         email: email,
         password: password,
+        fcmToken: fcmToken,
       );
 
       if (response.success && response.user != null) {
@@ -258,7 +262,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           authResponse: response,
           error: null,
         );
-        
+
         if (response.user!.isDriver) {
           final driverStatus = await getDriverStatus();
           state = state.copyWith(driverStatus: driverStatus);
@@ -466,24 +470,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-Future<Map<String, dynamic>?> getDriverStatus() async {
-  try {
-    final response = await _authService.getDriverStatus();
-    if (response['success'] == true) {
-      final data = response['data'];
-      state = state.copyWith(driverStatus: data);
-      return data;
+  Future<Map<String, dynamic>?> getDriverStatus() async {
+    try {
+      final response = await _authService.getDriverStatus();
+      print('📊 Driver status response: $response');
+
+      if (response['success'] == true) {
+        final data = response['data'];
+        state = state.copyWith(driverStatus: data);
+        return data;
+      } else {
+        print('⚠️ Driver status not found, using default');
+        final defaultStatus = {
+          'status': 'Pending',
+          'needsOnboarding': true,
+          'hasCompleteInfo': false,
+          'message': 'Please complete your driver profile'
+        };
+        state = state.copyWith(driverStatus: defaultStatus);
+        return defaultStatus;
+      }
+    } catch (e) {
+      print('❌ Get driver status error: $e');
+      return {
+        'status': 'Pending',
+        'needsOnboarding': true,
+        'hasCompleteInfo': false,
+        'message': 'Please complete your driver profile'
+      };
     }
-    return null;
-  } catch (e) {
-    print('❌ Get driver status error: $e');
-    return {
-      'status': 'Pending',
-      'needsOnboarding': true,
-      'hasCompleteInfo': false,
-    };
   }
-}
+
   Future<bool> canGoOnline() async {
     try {
       final response = await _authService.canGoOnline();
@@ -534,7 +551,6 @@ Future<Map<String, dynamic>?> getDriverStatus() async {
       return false;
     }
   }
-
 
   void clearError() {
     state = state.copyWith(error: null);

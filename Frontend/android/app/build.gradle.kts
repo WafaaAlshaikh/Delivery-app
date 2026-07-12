@@ -1,11 +1,15 @@
+// android/app/build.gradle
+
+// ✅ أضف Google Services plugin
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")  // ← أضف هذا السطر
 }
 
 android {
-    namespace = "com.example.frontend"
+    // ✅ تأكد من أن الـ namespace يطابق الـ package name في Firebase
+    namespace = "com.example.frontend"  // ← هذا يجب أن يطابق ما في Firebase
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -15,20 +19,20 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.frontend"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // ✅ هذا هو الـ Application ID المهم جداً
+        applicationId = "com.example.frontend"  // ← يجب أن يطابق ما في Firebase
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // ✅ تأكد من أن minSdk لا يقل عن 21 لدعم Firebase
+        minSdk = 21  // أو flutter.minSdkVersion
     }
 
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -42,4 +46,11 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+// ✅ (اختياري) يمكنك إضافة هذا للتأكد من أن google-services.json موجود
+tasks.whenTaskAdded {
+    if (name == "processDebugGoogleServices" || name == "processReleaseGoogleServices") {
+        dependsOn(":app:copyGoogleServices")
+    }
 }

@@ -1,5 +1,6 @@
 // lib/screens/onboarding/onboarding_screen.dart
 import 'package:flutter/material.dart';
+import 'package:frontend/screens/landing/landing_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/theme/colors.dart';
@@ -53,7 +54,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      MaterialPageRoute(builder: (context) => const LandingScreen()),
     );
   }
 

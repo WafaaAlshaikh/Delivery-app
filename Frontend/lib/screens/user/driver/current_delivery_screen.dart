@@ -171,7 +171,6 @@ class _CurrentDeliveryScreenState extends ConsumerState<CurrentDeliveryScreen> {
         });
       }
     } catch (e) {
-      // Silent fail - don't show error to user
     }
   }
 

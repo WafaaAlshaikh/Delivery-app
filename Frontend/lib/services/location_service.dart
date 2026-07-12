@@ -2,9 +2,18 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geocoding/geocoding.dart'; 
+import 'package:geocoding/geocoding.dart';
 
 class LocationService {
+  Geocoding? _geocodingInstance;
+
+  Geocoding? get _geocoding {
+    if (kIsWeb) {
+      return null;
+    }
+    return _geocodingInstance ??= Geocoding();
+  }
+
   Future<bool> checkAndRequestPermissions() async {
     if (kIsWeb) {
       try {
@@ -32,24 +41,25 @@ class LocationService {
     return false;
   }
 
-Future<Position?> getCurrentLocation() async {
-  try {
-    final hasPermission = await checkAndRequestPermissions();
-    if (!hasPermission) {
+  Future<Position?> getCurrentLocation() async {
+    try {
+      final hasPermission = await checkAndRequestPermissions();
+      if (!hasPermission) {
+        return null;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      return position;
+    } catch (e) {
+      debugPrint('❌ Error getting location: $e');
       return null;
     }
-
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 10),
-    );
-
-    return position;
-  } catch (e) {
-    print('❌ Error getting location: $e');
-    return null;
   }
-}
+
   Stream<Position> getLocationStream() {
     return Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -65,8 +75,13 @@ Future<Position?> getCurrentLocation() async {
   }
 
   Future<String> getAddressFromLatLng(double lat, double lng) async {
+    if (kIsWeb) {
+      debugPrint('⚠️ Geocoding غير مدعوم على الويب حاليًا');
+      return '$lat, $lng';
+    }
+
     try {
-      final placemarks = await placemarkFromCoordinates(lat, lng);
+      final placemarks = await _geocoding!.placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
         final street = place.street ?? '';
@@ -76,20 +91,25 @@ Future<Position?> getCurrentLocation() async {
       }
       return 'Unknown location';
     } catch (e) {
-      print('❌ Error getting address: $e');
+      debugPrint('❌ Error getting address: $e');
       return 'Unable to get address';
     }
   }
 
   Future<Placemark?> getPlacemarkFromLatLng(double lat, double lng) async {
+    if (kIsWeb) {
+      debugPrint('⚠️ Geocoding غير مدعوم على الويب حاليًا');
+      return null;
+    }
+
     try {
-      final placemarks = await placemarkFromCoordinates(lat, lng);
+      final placemarks = await _geocoding!.placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
         return placemarks.first;
       }
       return null;
     } catch (e) {
-      print('❌ Error getting placemark: $e');
+      debugPrint('❌ Error getting placemark: $e');
       return null;
     }
   }

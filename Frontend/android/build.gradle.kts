@@ -1,3 +1,4 @@
+// android/build.gradle
 allprojects {
     repositories {
         google()
@@ -17,6 +18,18 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+// ✅ أضف هذا القسم لإضافة Google Services plugin
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // ✅ أضف هذه السطر لإضافة Google Services
+        classpath("com.google.gms:google-services:4.4.0")
+    }
 }
 
 tasks.register<Delete>("clean") {

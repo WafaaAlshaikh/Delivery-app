@@ -1,75 +1,97 @@
 // src/controllers/adminController.js
-const { Op } = require('sequelize');
-const { 
-  User, 
-  Role, 
-  UserRole, 
-  Business, 
-  Order, 
+const { Op } = require("sequelize");
+const {
+  User,
+  Role,
+  UserRole,
+  Business,
+  BusinessCategory,
+  Order,
   OrderItem,
   Payment,
   OrderStatus,
-  sequelize 
-} = require('../models');
-const DriverVerificationService = require('../services/driverVerificationService');
+  Product,
+  sequelize,
+} = require("../models");
+const DriverVerificationService = require("../services/driverVerificationService");
+const NotificationService = require("../services/notificationService");
+
+
+const formatStoreForAdmin = (store) => ({
+  id: store.restaurant_id,
+  name: store.name,
+  category: store.category ? store.category.name : null,
+  address: store.address,
+  image_url: store.image_url,
+  approval_status: store.approval_status
+});
+
 
 
 const getDashboardStats = async (req, res) => {
   try {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📊 [ADMIN] Fetching dashboard stats');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📊 [ADMIN] Fetching dashboard stats");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const totalUsers = await User.count();
+    const totalStores = await Business.count();
+    const totalOrders = await Order.count();
+    
+    const revenue = await Order.sum('total', { 
+      where: { status_id: 8 } 
+    }) || 0;
 
-    const customerRole = await Role.findOne({ where: { name: 'Customer' } });
-    const merchantRole = await Role.findOne({ where: { name: 'Merchant' } });
-    const driverRole = await Role.findOne({ where: { name: 'Driver' } });
+    const customerRole = await Role.findOne({ where: { name: "Customer" } });
+    const merchantRole = await Role.findOne({ where: { name: "Merchant" } });
+    const driverRole = await Role.findOne({ where: { name: "Driver" } });
 
     let totalCustomers = 0;
     let totalMerchants = 0;
     let totalDrivers = 0;
 
     if (customerRole) {
-      totalCustomers = await UserRole.count({ 
-        where: { role_id: customerRole.role_id } 
+      totalCustomers = await UserRole.count({
+        where: { role_id: customerRole.role_id },
       });
     }
     if (merchantRole) {
-      totalMerchants = await UserRole.count({ 
-        where: { role_id: merchantRole.role_id } 
+      totalMerchants = await UserRole.count({
+        where: { role_id: merchantRole.role_id },
       });
     }
     if (driverRole) {
-      totalDrivers = await UserRole.count({ 
-        where: { role_id: driverRole.role_id } 
+      totalDrivers = await UserRole.count({
+        where: { role_id: driverRole.role_id },
       });
     }
 
-    const totalOrders = await Order.count();
-
-    const pendingOrders = await Order.count({ 
-      where: { status_id: 1 }
+    const pendingOrders = await Order.count({
+      where: { status_id: 1 }, 
     });
-    const activeOrders = await Order.count({ 
-      where: { status_id: { [Op.between]: [2, 7] } } 
+    const activeOrders = await Order.count({
+      where: { status_id: { [Op.between]: [2, 7] } }, 
     });
-    const completedOrders = await Order.count({ 
-      where: { status_id: 8 }
+    const completedOrders = await Order.count({
+      where: { status_id: 8 }, 
     });
 
-    const revenueResult = await Order.sum('total', {
-      where: { status_id: 8 } 
+    const ordersByStatus = await Order.findAll({
+      attributes: [
+        'status_id',
+        [sequelize.fn('COUNT', sequelize.col('order_id')), 'count']
+      ],
+      group: ['status_id'],
+      include: [{ model: OrderStatus, attributes: ['name'] }]
     });
-    const totalRevenue = revenueResult || 0;
 
     const recentOrders = await Order.findAll({
       limit: 5,
-      order: [['created_at', 'DESC']],
+      order: [["created_at", "DESC"]],
       include: [
-        { model: User, as: 'Customer', attributes: ['full_name', 'email'] },
-        { model: Business, attributes: ['name'] }
-      ]
+        { model: User, as: "Customer", attributes: ["full_name", "email"] },
+        { model: Business, attributes: ["name"] },
+      ],
     });
 
     const weekAgo = new Date();
@@ -77,15 +99,15 @@ const getDashboardStats = async (req, res) => {
     const newMerchants = await UserRole.count({
       where: {
         role_id: merchantRole?.role_id,
-        assigned_at: { [Op.gte]: weekAgo }
-      }
+        assigned_at: { [Op.gte]: weekAgo },
+      },
     });
 
-    console.log('✅ Dashboard stats fetched successfully');
+    console.log("✅ Dashboard stats fetched successfully");
     console.log(`   ├─ Users: ${totalUsers}`);
     console.log(`   ├─ Orders: ${totalOrders}`);
-    console.log(`   └─ Revenue: $${totalRevenue}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log(`   └─ Revenue: $${revenue}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
@@ -95,75 +117,229 @@ const getDashboardStats = async (req, res) => {
           customers: totalCustomers,
           merchants: totalMerchants,
           drivers: totalDrivers,
-          newMerchants: newMerchants
+          newMerchants: newMerchants,
         },
         orders: {
           total: totalOrders,
           pending: pendingOrders,
           active: activeOrders,
-          completed: completedOrders
+          completed: completedOrders,
         },
-        revenue: totalRevenue,
-        recentOrders: recentOrders
-      }
+        revenue: revenue,
+        ordersByStatus: ordersByStatus.map(o => ({
+          status_id: o.status_id,
+          status: o.OrderStatus ? o.OrderStatus.name : 'Unknown',
+          count: Number(o.get('count'))
+        })),
+        recentOrders: recentOrders,
+        totalStores: totalStores,
+      },
     });
-
   } catch (error) {
-    console.error('❌ Dashboard stats error:', error);
+    console.error("❌ Dashboard stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching dashboard stats'
+      message: "Server error fetching dashboard stats",
     });
   }
 };
+
+
+const getStores = async (req, res) => {
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🏪 [ADMIN] Fetching stores");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const stores = await Business.findAll({
+      include: [{ model: BusinessCategory }], 
+      order: [['created_at', 'DESC']]
+    });
+
+    console.log(`✅ Found ${stores.length} stores`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(200).json({
+      success: true,
+      stores: stores.map(store => ({
+        id: store.business_id,
+        name: store.name,
+        category: store.BusinessCategory ? store.BusinessCategory.name : null,
+        address: store.address,
+        image_url: store.logo,
+        approval_status: store.status
+      }))
+    });
+  } catch (error) {
+    console.error("❌ Admin get stores error:", error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching stores'
+    });
+  }
+};
+
+
+const approveStore = async (req, res) => {
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(`✅ [ADMIN] Approving store: ${req.params.id}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const store = await Business.findByPk(req.params.id);
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Store not found' 
+      });
+    }
+
+    await store.update({ 
+      approval_status: 'Approved', 
+      rejection_reason: null 
+    });
+
+    const owner = await User.findByPk(store.user_id);
+    if (owner && owner.status === 'Pending') {
+      await owner.update({ status: 'Approved' });
+    }
+
+    console.log(`✅ Store ${store.name} approved successfully`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Store approved' 
+    });
+  } catch (error) {
+    console.error("❌ Admin approve store error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while approving store' 
+    });
+  }
+};
+
+
+const rejectStore = async (req, res) => {
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(`❌ [ADMIN] Rejecting store: ${req.params.id}`);
+    console.log(`   └─ Reason: ${req.body.reason || 'No reason provided'}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const store = await Business.findByPk(req.params.id);
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Store not found' 
+      });
+    }
+
+    await store.update({
+      approval_status: 'Rejected',
+      rejection_reason: req.body.reason || null
+    });
+
+    console.log(`✅ Store ${store.name} rejected`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Store rejected' 
+    });
+  } catch (error) {
+    console.error("❌ Admin reject store error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while rejecting store' 
+    });
+  }
+};
+
+
+const deleteStore = async (req, res) => {
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log(`🗑️ [ADMIN] Deleting store: ${req.params.id}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const store = await Business.findByPk(req.params.id);
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Store not found' 
+      });
+    }
+
+    await store.destroy();
+
+    console.log(`✅ Store deleted successfully`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Store deleted' 
+    });
+  } catch (error) {
+    console.error("❌ Admin delete store error:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while deleting store' 
+    });
+  }
+};
+
 
 const getUsers = async (req, res) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('👥 [ADMIN] Fetching users');
-    console.log(`   ├─ role: ${role || 'All'}`);
-    console.log(`   ├─ search: ${search || 'None'}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("👥 [ADMIN] Fetching users");
+    console.log(`   ├─ role: ${role || "All"}`);
+    console.log(`   ├─ search: ${search || "None"}`);
     console.log(`   └─ page: ${page}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const whereClause = {};
     if (search) {
       whereClause[Op.or] = [
         { full_name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } }
+        { email: { [Op.like]: `%${search}%` } },
       ];
     }
 
     const users = await User.findAndCountAll({
       where: whereClause,
-      attributes: { exclude: ['password_hash'] },
+      attributes: { exclude: ["password_hash"] },
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']]
+      order: [["created_at", "DESC"]],
     });
 
-    const usersWithRoles = await Promise.all(users.rows.map(async (user) => {
-      const userRoles = await UserRole.findAll({
-        where: { user_id: user.user_id },
-        include: [{ model: Role, attributes: ['name'] }]
-      });
-      const roles = userRoles.map(ur => ur.Role.name);
-      return {
-        ...user.toJSON(),
-        roles
-      };
-    }));
+    const usersWithRoles = await Promise.all(
+      users.rows.map(async (user) => {
+        const userRoles = await UserRole.findAll({
+          where: { user_id: user.user_id },
+          include: [{ model: Role, attributes: ["name"] }],
+        });
+        const roles = userRoles.map((ur) => ur.Role.name);
+        return {
+          ...user.toJSON(),
+          roles,
+        };
+      }),
+    );
 
     let filteredUsers = usersWithRoles;
     if (role) {
-      filteredUsers = usersWithRoles.filter(u => u.roles.includes(role));
+      filteredUsers = usersWithRoles.filter((u) => u.roles.includes(role));
     }
 
     console.log(`✅ Found ${filteredUsers.length} users`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
@@ -172,16 +348,55 @@ const getUsers = async (req, res) => {
         pagination: {
           total: filteredUsers.length,
           page: parseInt(page),
-          limit: parseInt(limit)
-        }
-      }
+          limit: parseInt(limit),
+        },
+      },
     });
-
   } catch (error) {
-    console.error('❌ Get users error:', error);
+    console.error("❌ Get users error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching users'
+      message: "Server error fetching users",
+    });
+  }
+};
+
+
+const getCategories = async (req, res) => {
+  try {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📂 [ADMIN] Fetching categories");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const categories = await BusinessCategory.findAll({
+      order: [['name', 'ASC']] 
+    });
+
+    const withCounts = await Promise.all(categories.map(async (c) => {
+      const storeCount = await Business.count({
+        where: { category_id: c.category_id }
+      });
+      return {
+        id: c.category_id,
+        name: c.name,
+        icon: c.icon,
+        store_count: storeCount,
+        product_count: 0
+      };
+    }));
+
+    console.log(`✅ Found ${withCounts.length} categories`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(200).json({
+      success: true,
+      categories: withCounts
+    });
+  } catch (error) {
+    console.error("❌ Admin get categories error:", error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching categories'
     });
   }
 };
@@ -191,109 +406,105 @@ const getUserDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`👤 [ADMIN] Fetching user details: ${id}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const user = await User.findByPk(id, {
-      attributes: { exclude: ['password_hash'] }
+      attributes: { exclude: ["password_hash"] },
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     const userRoles = await UserRole.findAll({
       where: { user_id: user.user_id },
-      include: [{ model: Role, attributes: ['name'] }]
+      include: [{ model: Role, attributes: ["name"] }],
     });
-    const roles = userRoles.map(ur => ur.Role.name);
+    const roles = userRoles.map((ur) => ur.Role.name);
 
     const ordersCount = await Order.count({
-      where: { customer_id: user.user_id }
+      where: { customer_id: user.user_id },
     });
 
     const userData = {
       ...user.toJSON(),
       roles,
-      ordersCount
+      ordersCount,
     };
 
     console.log(`✅ User details fetched: ${user.email}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: userData
+      data: userData,
     });
-
   } catch (error) {
-    console.error('❌ Get user details error:', error);
+    console.error("❌ Get user details error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching user details'
+      message: "Server error fetching user details",
     });
   }
 };
-
 
 const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { is_active } = req.body;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`🔄 [ADMIN] Updating user status: ${id}`);
     console.log(`   └─ is_active: ${is_active}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     await user.update({ is_active });
 
     console.log(`✅ User ${user.email} status updated to ${is_active}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: `User ${is_active ? 'activated' : 'deactivated'} successfully`,
-      data: { user_id: user.user_id, is_active: user.is_active }
+      message: `User ${is_active ? "activated" : "deactivated"} successfully`,
+      data: { user_id: user.user_id, is_active: user.is_active },
     });
-
   } catch (error) {
-    console.error('❌ Update user status error:', error);
+    console.error("❌ Update user status error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating user status'
+      message: "Server error updating user status",
     });
   }
 };
-
 
 const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`🔄 [ADMIN] Updating user role: ${id}`);
     console.log(`   └─ new role: ${role}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
@@ -301,7 +512,7 @@ const updateUserRole = async (req, res) => {
     if (!roleRecord) {
       return res.status(400).json({
         success: false,
-        message: `Role "${role}" not found`
+        message: `Role "${role}" not found`,
       });
     }
 
@@ -310,61 +521,57 @@ const updateUserRole = async (req, res) => {
     await UserRole.create({
       user_id: user.user_id,
       role_id: roleRecord.role_id,
-      assigned_at: new Date()
+      assigned_at: new Date(),
     });
 
     console.log(`✅ User ${user.email} role updated to ${role}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
       message: `User role updated to ${role}`,
-      data: { user_id: user.user_id, role }
+      data: { user_id: user.user_id, role },
     });
-
   } catch (error) {
-    console.error('❌ Update user role error:', error);
+    console.error("❌ Update user role error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating user role'
+      message: "Server error updating user role",
     });
   }
 };
-
 
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`🗑️ [ADMIN] Deleting user: ${id}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: "User not found",
       });
     }
 
     await UserRole.destroy({ where: { user_id: user.user_id } });
-
     await user.destroy();
 
     console.log(`✅ User ${user.email} deleted successfully`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully'
+      message: "User deleted successfully",
     });
-
   } catch (error) {
-    console.error('❌ Delete user error:', error);
+    console.error("❌ Delete user error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error deleting user'
+      message: "Server error deleting user",
     });
   }
 };
@@ -372,32 +579,35 @@ const deleteUser = async (req, res) => {
 
 const getMerchants = async (req, res) => {
   try {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🏪 [ADMIN] Fetching merchants');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🏪 [ADMIN] Fetching merchants");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    const merchantRole = await Role.findOne({ where: { name: 'Merchant' } });
+    const merchantRole = await Role.findOne({ where: { name: "Merchant" } });
     if (!merchantRole) {
       return res.status(404).json({
         success: false,
-        message: 'Merchant role not found'
+        message: "Merchant role not found",
       });
     }
 
     const userRoles = await UserRole.findAll({
       where: { role_id: merchantRole.role_id },
       include: [
-        { 
-          model: User, 
-          attributes: { exclude: ['password_hash'] },
+        {
+          model: User,
+          attributes: { exclude: ["password_hash"] },
           include: [
-            { model: Business, attributes: ['business_id', 'name', 'status', 'rating'] }
-          ]
-        }
-      ]
+            {
+              model: Business,
+              attributes: ["business_id", "name", "status", "rating"],
+            },
+          ],
+        },
+      ],
     });
 
-    const merchants = userRoles.map(ur => {
+    const merchants = userRoles.map((ur) => {
       const user = ur.User;
       return {
         user_id: user.user_id,
@@ -407,23 +617,22 @@ const getMerchants = async (req, res) => {
         is_active: user.is_active,
         is_verified: user.is_verified,
         business: user.Businesses?.[0] || null,
-        created_at: user.created_at
+        created_at: user.created_at,
       };
     });
 
     console.log(`✅ Found ${merchants.length} merchants`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: merchants
+      data: merchants,
     });
-
   } catch (error) {
-    console.error('❌ Get merchants error:', error);
+    console.error("❌ Get merchants error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching merchants'
+      message: "Server error fetching merchants",
     });
   }
 };
@@ -431,29 +640,29 @@ const getMerchants = async (req, res) => {
 
 const getDrivers = async (req, res) => {
   try {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🚗 [ADMIN] Fetching drivers');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("🚗 [ADMIN] Fetching drivers");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    const driverRole = await Role.findOne({ where: { name: 'Driver' } });
+    const driverRole = await Role.findOne({ where: { name: "Driver" } });
     if (!driverRole) {
       return res.status(404).json({
         success: false,
-        message: 'Driver role not found'
+        message: "Driver role not found",
       });
     }
 
     const userRoles = await UserRole.findAll({
       where: { role_id: driverRole.role_id },
       include: [
-        { 
-          model: User, 
-          attributes: { exclude: ['password_hash'] }
-        }
-      ]
+        {
+          model: User,
+          attributes: { exclude: ["password_hash"] },
+        },
+      ],
     });
 
-    const drivers = userRoles.map(ur => {
+    const drivers = userRoles.map((ur) => {
       const user = ur.User;
       return {
         user_id: user.user_id,
@@ -462,38 +671,36 @@ const getDrivers = async (req, res) => {
         phone: user.phone,
         is_active: user.is_active,
         is_verified: user.is_verified,
-        created_at: user.created_at
+        created_at: user.created_at,
       };
     });
 
     console.log(`✅ Found ${drivers.length} drivers`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: drivers
+      data: drivers,
     });
-
   } catch (error) {
-    console.error('❌ Get drivers error:', error);
+    console.error("❌ Get drivers error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching drivers'
+      message: "Server error fetching drivers",
     });
   }
 };
-
 
 const getOrders = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📦 [ADMIN] Fetching orders');
-    console.log(`   ├─ status: ${status || 'All'}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📦 [ADMIN] Fetching orders");
+    console.log(`   ├─ status: ${status || "All"}`);
     console.log(`   └─ page: ${page}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const whereClause = {};
     if (status) {
@@ -504,17 +711,26 @@ const getOrders = async (req, res) => {
       where: whereClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['created_at', 'DESC']],
+      order: [["created_at", "DESC"]],
       include: [
-        { model: User, as: 'Customer', attributes: ['full_name', 'email', 'phone'] },
-        { model: Business, attributes: ['name'] },
-        { model: User, as: 'Driver', attributes: ['full_name'], required: false },
-        { model: OrderStatus, attributes: ['name', 'color'] }
-      ]
+        {
+          model: User,
+          as: "Customer",
+          attributes: ["full_name", "email", "phone"],
+        },
+        { model: Business, attributes: ["name"] },
+        {
+          model: User,
+          as: "Driver",
+          attributes: ["full_name"],
+          required: false,
+        },
+        { model: OrderStatus, attributes: ["name", "color"] },
+      ],
     });
 
     console.log(`✅ Found ${orders.count} orders`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
@@ -523,16 +739,15 @@ const getOrders = async (req, res) => {
         pagination: {
           total: orders.count,
           page: parseInt(page),
-          limit: parseInt(limit)
-        }
-      }
+          limit: parseInt(limit),
+        },
+      },
     });
-
   } catch (error) {
-    console.error('❌ Get orders error:', error);
+    console.error("❌ Get orders error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching orders'
+      message: "Server error fetching orders",
     });
   }
 };
@@ -542,120 +757,126 @@ const getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`📦 [ADMIN] Fetching order details: ${id}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const order = await Order.findByPk(id, {
       include: [
-        { model: User, as: 'Customer', attributes: ['full_name', 'email', 'phone'] },
-        { model: Business, attributes: ['name', 'phone', 'email'] },
-        { model: User, as: 'Driver', attributes: ['full_name', 'phone'], required: false },
-        { model: OrderStatus, attributes: ['name', 'color'] },
-        { 
-          model: OrderItem,
-          include: [
-            { model: Product, attributes: ['name', 'image_url'] }
-          ]
+        {
+          model: User,
+          as: "Customer",
+          attributes: ["full_name", "email", "phone"],
         },
-        { model: Payment, include: [{ model: PaymentStatus, attributes: ['name'] }] }
-      ]
+        { model: Business, attributes: ["name", "phone", "email"] },
+        {
+          model: User,
+          as: "Driver",
+          attributes: ["full_name", "phone"],
+          required: false,
+        },
+        { model: OrderStatus, attributes: ["name", "color"] },
+        {
+          model: OrderItem,
+          include: [{ model: Product, attributes: ["name", "image_url"] }],
+        },
+        {
+          model: Payment,
+          include: [{ model: PaymentStatus, attributes: ["name"] }],
+        },
+      ],
     });
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: "Order not found",
       });
     }
 
     console.log(`✅ Order ${id} details fetched`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: order
+      data: order,
     });
-
   } catch (error) {
-    console.error('❌ Get order details error:', error);
+    console.error("❌ Get order details error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching order details'
+      message: "Server error fetching order details",
     });
   }
 };
-
 
 const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status_id, notes } = req.body;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`🔄 [ADMIN] Updating order status: ${id}`);
     console.log(`   ├─ status_id: ${status_id}`);
-    console.log(`   └─ notes: ${notes || 'None'}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`   └─ notes: ${notes || "None"}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     const order = await Order.findByPk(id);
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: 'Order not found'
+        message: "Order not found",
       });
     }
 
     await order.update({ status_id });
 
-    const { OrderStatusHistory } = require('../models');
+    const { OrderStatusHistory } = require("../models");
     await OrderStatusHistory.create({
       order_id: order.order_id,
       status_id: status_id,
       changed_by: req.user.user_id,
-      notes: notes || null
+      notes: notes || null,
     });
 
     console.log(`✅ Order ${id} status updated to ${status_id}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      message: 'Order status updated successfully',
-      data: { order_id: order.order_id, status_id: order.status_id }
+      message: "Order status updated successfully",
+      data: { order_id: order.order_id, status_id: order.status_id },
     });
-
   } catch (error) {
-    console.error('❌ Update order status error:', error);
+    console.error("❌ Update order status error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error updating order status'
+      message: "Server error updating order status",
     });
   }
 };
 
-
 const getChartData = async (req, res) => {
   try {
-    const { period = 'week' } = req.query;
+    const { period = "week" } = req.query;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`📊 [ADMIN] Fetching chart data: ${period}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     let startDate;
     const now = new Date();
 
     switch (period) {
-      case 'week':
+      case "week":
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
         break;
-      case 'month':
+      case "month":
         startDate = new Date(now);
         startDate.setMonth(now.getMonth() - 1);
         break;
-      case 'year':
+      case "year":
         startDate = new Date(now);
         startDate.setFullYear(now.getFullYear() - 1);
         break;
@@ -667,57 +888,55 @@ const getChartData = async (req, res) => {
     const orders = await Order.findAll({
       where: {
         created_at: { [Op.gte]: startDate },
-        status_id: 8 
+        status_id: 8,
       },
       attributes: [
-        [sequelize.fn('DATE', sequelize.col('created_at')), 'date'],
-        [sequelize.fn('COUNT', sequelize.col('order_id')), 'count'],
-        [sequelize.fn('SUM', sequelize.col('total')), 'revenue']
+        [sequelize.fn("DATE", sequelize.col("created_at")), "date"],
+        [sequelize.fn("COUNT", sequelize.col("order_id")), "count"],
+        [sequelize.fn("SUM", sequelize.col("total")), "revenue"],
       ],
-      group: [sequelize.fn('DATE', sequelize.col('created_at'))],
-      order: [[sequelize.fn('DATE', sequelize.col('created_at')), 'ASC']]
+      group: [sequelize.fn("DATE", sequelize.col("created_at"))],
+      order: [[sequelize.fn("DATE", sequelize.col("created_at")), "ASC"]],
     });
 
     console.log(`✅ Chart data fetched: ${orders.length} entries`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: orders
+      data: orders,
     });
-
   } catch (error) {
-    console.error('❌ Chart data error:', error);
+    console.error("❌ Chart data error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching chart data'
+      message: "Server error fetching chart data",
     });
   }
 };
 
 const getDriverApplications = async (req, res) => {
   try {
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📋 [ADMIN] Fetching driver applications');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📋 [ADMIN] Fetching driver applications");
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    const { status = 'Pending' } = req.query;
-    
+    const { status = "Pending" } = req.query;
+
     const drivers = await DriverVerificationService.getDriversByStatus(status);
 
     console.log(`✅ Found ${drivers.length} driver applications`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json({
       success: true,
-      data: drivers
+      data: drivers,
     });
-
   } catch (error) {
-    console.error('❌ Get driver applications error:', error);
+    console.error("❌ Get driver applications error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching driver applications'
+      message: "Server error fetching driver applications",
     });
   }
 };
@@ -727,36 +946,35 @@ const reviewDriverApplication = async (req, res) => {
     const { profileId } = req.params;
     const { action, notes } = req.body;
 
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📋 [ADMIN] Reviewing driver application');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📋 [ADMIN] Reviewing driver application");
     console.log(`   ├─ Profile ID: ${profileId}`);
     console.log(`   ├─ Action: ${action}`);
-    console.log(`   └─ Notes: ${notes || 'None'}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`   └─ Notes: ${notes || "None"}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
-    if (!['approve', 'reject', 'suspend'].includes(action)) {
+    if (!["approve", "reject", "suspend"].includes(action)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid action. Use: approve, reject, or suspend'
+        message: "Invalid action. Use: approve, reject, or suspend",
       });
     }
 
     const result = await DriverVerificationService.adminReview(
       profileId,
       action,
-      notes
+      notes,
     );
 
     console.log(`✅ Driver ${action}d successfully`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
 
     res.status(200).json(result);
-
   } catch (error) {
-    console.error('❌ Review driver application error:', error);
+    console.error("❌ Review driver application error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error reviewing driver application'
+      message: "Server error reviewing driver application",
     });
   }
 };
@@ -767,14 +985,13 @@ const getDriverStats = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
-    console.error('❌ Get driver stats error:', error);
+    console.error("❌ Get driver stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching driver stats'
+      message: "Server error fetching driver stats",
     });
   }
 };
@@ -782,37 +999,153 @@ const getDriverStats = async (req, res) => {
 const getAllDriversForAdmin = async (req, res) => {
   try {
     const { status } = req.query;
-    const drivers = await DriverVerificationService.getDriversByStatus(status || null);
+    const drivers = await DriverVerificationService.getDriversByStatus(
+      status || null,
+    );
 
     res.status(200).json({
       success: true,
-      data: drivers
+      data: drivers,
     });
-
   } catch (error) {
-    console.error('❌ Get all drivers error:', error);
+    console.error("❌ Get all drivers error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error fetching drivers'
+      message: "Server error fetching drivers",
     });
   }
 };
 
+const createUser = async (req, res) => {
+  try {
+    const { full_name, email, phone, role = "Customer", password } = req.body;
+
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("👤 [ADMIN] Creating new user");
+    console.log(`   ├─ full_name: ${full_name}`);
+    console.log(`   ├─ email: ${email}`);
+    console.log(`   └─ role: ${role}`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists",
+      });
+    }
+
+    const bcrypt = require("bcrypt");
+    const hashedPassword = await bcrypt.hash(password || "default123", 10);
+
+    const user = await User.create({
+      full_name,
+      email,
+      phone: phone || null,
+      password_hash: hashedPassword,
+      is_verified: true,
+      is_active: true,
+    });
+
+    const roleRecord = await Role.findOne({ where: { name: role } });
+    if (roleRecord) {
+      await UserRole.create({
+        user_id: user.user_id,
+        role_id: roleRecord.role_id,
+        assigned_at: new Date(),
+      });
+    }
+
+    try {
+      const adminRole = await Role.findOne({ where: { name: "Admin" } });
+      if (adminRole) {
+        const adminUsers = await UserRole.findAll({
+          where: { role_id: adminRole.role_id },
+          include: [
+            { model: User, attributes: ["user_id", "email", "fcm_token"] },
+          ],
+        });
+
+        let sentCount = 0;
+        for (const admin of adminUsers) {
+          if (admin.User?.fcm_token) {
+            try {
+              await NotificationService.sendPushNotification({
+                token: admin.User.fcm_token,
+                title: "👤 New User Registered",
+                body: `${user.full_name} (${user.email}) just joined as ${role}`,
+                data: {
+                  type: "new_user",
+                  userId: String(user.user_id),
+                  screen: "admin_users",
+                },
+              });
+              sentCount++;
+            } catch (notifError) {
+              console.error(
+                `⚠️ Failed to send to admin ${admin.User.email}:`,
+                notifError.message,
+              );
+            }
+          }
+        }
+        if (sentCount > 0) {
+          console.log(`✅ Admin notifications sent to ${sentCount} admins`);
+        }
+      }
+    } catch (adminError) {
+      console.error("⚠️ Admin notification error:", adminError.message);
+    }
+
+    console.log(`✅ User ${user.email} created successfully`);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: {
+        user_id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        role: role,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Create user error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error creating user",
+    });
+  }
+};
+
+
 module.exports = {
   getDashboardStats,
+  getChartData,
+
   getUsers,
   getUserDetails,
   updateUserStatus,
   updateUserRole,
   deleteUser,
+  createUser,
   getMerchants,
   getDrivers,
+  getDriverStats,
+  getAllDriversForAdmin,
+
+  getDriverApplications,
+  reviewDriverApplication,
+
   getOrders,
   getOrderDetails,
   updateOrderStatus,
-  getChartData,
-  getDriverApplications,
-  reviewDriverApplication,
-  getDriverStats,
-  getAllDriversForAdmin
+
+  getStores,
+  approveStore,
+  rejectStore,
+  deleteStore,
+
+  getCategories,
 };

@@ -37,6 +37,10 @@ const User = sequelize.define('User', {
       notEmpty: { msg: 'Password is required' }
     }
   },
+  fcm_token: {
+  type: DataTypes.TEXT,
+  allowNull: true,
+},
   phone: {
     type: DataTypes.STRING(20),
     allowNull: true,

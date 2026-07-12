@@ -1,6 +1,7 @@
 // lib/core/providers/locale_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
@@ -9,7 +10,7 @@ final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>((ref) {
 
 class LocaleNotifier extends StateNotifier<Locale> {
   static const String _languageKey = 'language_code';
-  
+
   LocaleNotifier() : super(const Locale('en')) {
     _loadLocale();
   }

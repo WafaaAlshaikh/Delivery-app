@@ -1,6 +1,8 @@
 // lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/screens/admin/admin_dashboard_screen.dart';
+import 'package:frontend/screens/stores/stores_screen.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
@@ -50,7 +52,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             });
             
             if (_driverStatus == 'Active') {
-              // Driver is active, will show dashboard
             }
           }
         } catch (e) {
@@ -171,24 +172,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     if (user.isAdmin) {
-      return const AdminDashboard();
+      return const AdminDashboardScreen();
     } else if (user.isMerchant) {
-      return const MerchantDashboard();
+      return const StoresScreen();
     } else if (user.isDriver) {
       return const DriverDashboard();
     } else {
       final authNotifier = ref.read(authProvider.notifier);
-      return CustomerHome(
-        user: user,
-        onLogout: () async {
-          await authNotifier.logout();
-          if (!context.mounted) return;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-          );
-        },
-      );
+    return CustomerHome(
+      user: user,
+      onLogout: () async {
+        await authNotifier.logout();
+        if (!context.mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      },
+    );
     }
   }
 }
