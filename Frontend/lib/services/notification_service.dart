@@ -1,4 +1,5 @@
 // lib/services/notification_service.dart
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -144,6 +145,60 @@ class NotificationService {
       debugPrint('🔄 FCM Token refreshed: $newToken');
       _sendTokenToServer(newToken);
     });
+  }
+
+  static Future<void> sendPushNotification({
+    required String token,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+   
+      debugPrint('📤 Would send notification to $token: $title - $body');
+      
+   
+    } catch (e) {
+      debugPrint('❌ Error sending push notification: $e');
+    }
+  }
+
+  static Future<void> sendLowRatingNotification(
+    String token,
+    String driverName,
+    double rating,
+    String comment,
+    int orderId,
+  ) async {
+    await sendPushNotification(
+      token: token,
+      title: '⚠️ Low Rating Alert',
+      body: '$driverName, you received a ${rating.toStringAsFixed(1)}⭐ rating: "$comment"',
+      data: {
+        'type': 'low_rating',
+        'order_id': orderId.toString(),
+        'rating': rating.toString(),
+      },
+    );
+  }
+
+  static Future<void> sendExcellentRatingNotification(
+    String token,
+    String driverName,
+    double rating,
+    String comment,
+    int orderId,
+  ) async {
+    await sendPushNotification(
+      token: token,
+      title: '🌟 Excellent Rating!',
+      body: '$driverName, you received a ${rating.toStringAsFixed(1)}⭐ rating!',
+      data: {
+        'type': 'excellent_rating',
+        'order_id': orderId.toString(),
+        'rating': rating.toString(),
+      },
+    );
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {

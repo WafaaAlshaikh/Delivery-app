@@ -85,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tr = context.tr;
+    final tr = AppLocalizationsExtension(context).tr;
     final authState = ref.watch(authProvider);
     final user = authState.user;
 

@@ -1,4 +1,5 @@
 // backend/src/services/notificationService.js
+
 const admin = require("firebase-admin");
 const { Order, User, DriverProfile, Role, UserRole } = require("../models");
 
@@ -51,6 +52,116 @@ class NotificationService {
       return false;
     }
   }
+
+  static async sendLowRatingNotification(token, driverName, rating, comment, orderId) {
+    try {
+      if (!token) {
+        console.warn("⚠️ No FCM token provided for low rating notification");
+        return { success: false, message: "No token provided" };
+      }
+
+      const instance = new NotificationService();
+      if (!instance.isFirebaseReady()) {
+        console.warn("⚠️ Firebase not ready, skipping notification");
+        return { success: false, message: "Firebase not initialized" };
+      }
+
+      const title = `⚠️ Low Rating Alert`;
+      const body = `${driverName}, you received a ${rating}⭐ rating: "${comment}"`;
+
+      const result = await instance.sendPushNotification({
+        token: token,
+        title: title,
+        body: body,
+        data: {
+          type: "low_rating",
+          orderId: String(orderId),
+          rating: String(rating),
+          comment: comment || "",
+        },
+      });
+
+      console.log(`✅ Low rating notification sent to ${driverName}`);
+      return result;
+    } catch (error) {
+      console.error("❌ Send low rating notification error:", error.message);
+      return { success: false, message: error.message };
+    }
+  }
+
+  static async sendExcellentRatingNotification(token, driverName, rating, comment, orderId) {
+    try {
+      if (!token) {
+        console.warn("⚠️ No FCM token provided for excellent rating notification");
+        return { success: false, message: "No token provided" };
+      }
+
+      const instance = new NotificationService();
+      if (!instance.isFirebaseReady()) {
+        console.warn("⚠️ Firebase not ready, skipping notification");
+        return { success: false, message: "Firebase not initialized" };
+      }
+
+      const title = `🌟 Excellent Rating!`;
+      const body = `${driverName}, you received a ${rating}⭐ rating! "${comment}"`;
+
+      const result = await instance.sendPushNotification({
+        token: token,
+        title: title,
+        body: body,
+        data: {
+          type: "excellent_rating",
+          orderId: String(orderId),
+          rating: String(rating),
+          comment: comment || "",
+        },
+      });
+
+      console.log(`✅ Excellent rating notification sent to ${driverName}`);
+      return result;
+    } catch (error) {
+      console.error("❌ Send excellent rating notification error:", error.message);
+      return { success: false, message: error.message };
+    }
+  }
+
+  static async sendNewRatingNotification(token, driverName, rating, comment, orderId) {
+    try {
+      if (!token) {
+        console.warn("⚠️ No FCM token provided for new rating notification");
+        return { success: false, message: "No token provided" };
+      }
+
+      const instance = new NotificationService();
+      if (!instance.isFirebaseReady()) {
+        console.warn("⚠️ Firebase not ready, skipping notification");
+        return { success: false, message: "Firebase not initialized" };
+      }
+
+      const stars = '⭐'.repeat(Math.round(rating));
+      const title = `📝 New Rating Received!`;
+      const body = `${driverName}, you received ${stars} ${rating}⭐ from a customer`;
+
+      const result = await instance.sendPushNotification({
+        token: token,
+        title: title,
+        body: body,
+        data: {
+          type: "new_rating",
+          orderId: String(orderId),
+          rating: String(rating),
+          comment: comment || "",
+        },
+      });
+
+      console.log(`✅ New rating notification sent to ${driverName}`);
+      return result;
+    } catch (error) {
+      console.error("❌ Send new rating notification error:", error.message);
+      return { success: false, message: error.message };
+    }
+  }
+
 
   async sendOrderNotification(orderId, driverId, customerId) {
     try {
@@ -337,7 +448,9 @@ try {
       success: false,
       message: "Service unavailable",
     }),
-    // ... دوال فارغة
+    sendLowRatingNotification: async () => ({ success: false }),
+    sendExcellentRatingNotification: async () => ({ success: false }),
+    sendNewRatingNotification: async () => ({ success: false }),
   };
 }
 

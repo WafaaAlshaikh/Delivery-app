@@ -21,8 +21,10 @@ const Payment = require('./Payment');
 const Review = require('./Review');
 const DriverProfile = require('./DriverProfile'); 
 const DeliveryOffer = require('./DeliveryOffer');
-
-
+const Earning = require('./Earning');
+const Rating = require('./Rating');
+const ChatMessage = require('./ChatMessage');
+const ScheduledOrder = require('./ScheduledOrder');
 
 User.belongsToMany(Role, {
   through: UserRole,
@@ -112,6 +114,31 @@ DeliveryOffer.belongsTo(Order, { foreignKey: 'order_id' });
 User.hasMany(DeliveryOffer, { foreignKey: 'driver_id', as: 'DeliveryOffers' });
 DeliveryOffer.belongsTo(User, { foreignKey: 'driver_id', as: 'Driver' });
 
+Earning.belongsTo(User, { foreignKey: 'driver_id', as: 'Driver' });
+User.hasMany(Earning, { foreignKey: 'driver_id', as: 'Earnings' });
+
+Earning.belongsTo(Order, { foreignKey: 'order_id' });
+Order.hasOne(Earning, { foreignKey: 'order_id' });
+
+Rating.belongsTo(User, { foreignKey: 'driver_id', as: 'Driver' });
+Rating.belongsTo(User, { foreignKey: 'customer_id', as: 'Customer' });
+Rating.belongsTo(Order, { foreignKey: 'order_id' });
+
+ChatMessage.belongsTo(User, { foreignKey: 'sender_id', as: 'Sender' });
+User.hasMany(ChatMessage, { foreignKey: 'sender_id', as: 'SentMessages' });
+
+ChatMessage.belongsTo(User, { foreignKey: 'receiver_id', as: 'Receiver' });
+User.hasMany(ChatMessage, { foreignKey: 'receiver_id', as: 'ReceivedMessages' });
+
+ChatMessage.belongsTo(Order, { foreignKey: 'order_id' });
+Order.hasMany(ChatMessage, { foreignKey: 'order_id' });
+
+ScheduledOrder.belongsTo(Order, { foreignKey: 'order_id' });
+Order.hasOne(ScheduledOrder, { foreignKey: 'order_id' });
+
+ScheduledOrder.belongsTo(User, { foreignKey: 'driver_id', as: 'Driver' });
+User.hasMany(ScheduledOrder, { foreignKey: 'driver_id', as: 'ScheduledOrders' });
+
 module.exports = {
   sequelize,
   User,
@@ -134,4 +161,8 @@ module.exports = {
   Review,
   DriverProfile, 
   DeliveryOffer,
+  Earning,
+  Rating,
+  ChatMessage,
+  ScheduledOrder,
 };

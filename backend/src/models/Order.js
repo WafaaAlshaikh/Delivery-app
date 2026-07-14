@@ -88,7 +88,37 @@ const Order = sequelize.define('Order', {
     type: DataTypes.INTEGER,
     allowNull: true,
     comment: 'Estimated delivery time in minutes'
+  },
+  rating: {
+  type: DataTypes.DECIMAL(3, 2),
+  allowNull: true,
+  defaultValue: 0,
+  validate: {
+    min: 0,
+    max: 5
   }
+},
+ order_number: {
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    unique: true
+  },
+delivery_time: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  comment: 'Delivery time in minutes'
+},
+distance: {
+  type: DataTypes.DECIMAL(10, 2),
+  allowNull: true,
+  defaultValue: 0,
+  comment: 'Distance in kilometers'
+},
+tips: {
+  type: DataTypes.DECIMAL(10, 2),
+  allowNull: true,
+  defaultValue: 0
+}
 }, {
   tableName: 'orders',
   timestamps: true,

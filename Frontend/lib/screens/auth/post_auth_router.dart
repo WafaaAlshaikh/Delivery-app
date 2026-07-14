@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/screens/home/driver_dashboard.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/store_provider.dart';
 import '../home/home_screen.dart';
@@ -42,24 +43,25 @@ class _PostAuthRouterState extends ConsumerState<PostAuthRouter> {
     }
 
     if (user?.role == 'Driver') {
-      final needsOnboarding = driverStatus?['needsOnboarding'] ?? true;
-      final status = driverStatus?['status'] ?? 'Pending';
-      
-      print('🔍 Driver Status:');
-      print('  - needsOnboarding: $needsOnboarding');
-      print('  - status: $status');
-      print('  - driverStatus: $driverStatus');
+  final hasCompleteInfo = driverStatus?['hasCompleteInfo'] ?? false;
+  final status = driverStatus?['status'] ?? 'Pending';
 
-      if (needsOnboarding) {
-        return const DriverOnboardingScreen();
-      }
-      
-      if (status == 'Pending' || status == 'Rejected') {
-        return const DriverPendingScreen();
-      }
-      
-      return const HomeScreen();
-    }
+  print('🔍 Driver Status:');
+  print('  - hasCompleteInfo: $hasCompleteInfo');
+  print('  - status: $status');
+  print('  - driverStatus: $driverStatus');
+
+  if (!hasCompleteInfo) {
+    return const DriverOnboardingScreen();
+  }
+
+  if (status == 'Pending' || status == 'Rejected') {
+    return const DriverPendingScreen();
+  }
+
+  return const DriverDashboard();
+}
+
 
     if (user?.role == 'Customer') {
       return const HomeScreen();

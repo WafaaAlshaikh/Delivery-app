@@ -76,7 +76,6 @@ dependencies:
   flutter_web_plugins:
     sdk: flutter
 
-
   # ============================================================
   # 🗺️ Maps & Location
   # ============================================================
@@ -91,8 +90,24 @@ dependencies:
   # 📦 Other Utilities
   # ============================================================
   rxdart: ^0.28.0
-  pdf: ^3.12.0
-  printing: ^5.15.0
+
+  pdf: ^3.10.4
+  printing: ^5.11.1
+  share_plus: ^7.2.1
+  flutter_animate: ^4.5.2
+  mailer: ^6.0.1
+  
+  
+  # ✅ الترجمة (نسخة موجودة)
+  translator: ^1.0.4+1
+  
+  # ✅ الاتصالات
+  url_launcher: ^6.2.1
+  
+  # ✅ الصوت
+  # audio_recorder: ^1.0.0
+  record: ^5.0.0 
+  table_calendar: ^3.2.0
 
 dev_dependencies:
   flutter_test:

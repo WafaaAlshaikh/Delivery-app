@@ -54,6 +54,10 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/driver', require('./routes/driverRoutes'));
 app.use('/api/stores', require('./routes/storeRoutes'));
+app.use('/api/driver/earnings', require('./routes/earningsRoutes'));
+app.use('/api/ratings', require('./routes/ratingsRoutes'));
+app.use('/api/driver/chat', require('./routes/chatRoutes'));
+app.use('/api/driver/scheduling', require('./routes/schedulingRoutes'));
 
 // Health check
 app.get('/health', (req, res) => {
